@@ -26,8 +26,11 @@ test("package manifest exposes one extension and only intended skill tree", asyn
     extensions: ["./extensions/test-advisor.ts"],
     skills: ["./skills"],
   });
-  assert.equal(manifest.private, true);
-  assert.equal("publishConfig" in manifest, false);
+  assert.equal(manifest.private, false);
+  assert.deepEqual(manifest.publishConfig, { access: "public" });
+  assert.equal(manifest.repository.url, "git+https://github.com/stijnVanHorenbeek/pi-test-driven-development.git");
+  assert.equal(manifest.homepage, "https://github.com/stijnVanHorenbeek/pi-test-driven-development#readme");
+  assert.equal(manifest.bugs.url, "https://github.com/stijnVanHorenbeek/pi-test-driven-development/issues");
   assert.equal(manifest.files.includes("tests"), false);
   assert.equal(manifest.files.includes("evals"), false);
 });

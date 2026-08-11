@@ -1,9 +1,20 @@
 {
   "name": "pi-test-driven-development",
   "version": "0.1.0",
-  "private": true,
+  "private": false,
   "type": "module",
   "description": "Risk-based TDD skill and advisory testing tools for Pi",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/stijnVanHorenbeek/pi-test-driven-development.git"
+  },
+  "homepage": "https://github.com/stijnVanHorenbeek/pi-test-driven-development#readme",
+  "bugs": {
+    "url": "https://github.com/stijnVanHorenbeek/pi-test-driven-development/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "keywords": [
     "pi-package",
     "pi-skill",

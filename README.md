@@ -5,7 +5,7 @@ Risk-based test policy for [Pi](https://pi.dev): skill plus dynamically activate
 > [!WARNING]
 > Package extension can run repository commands through `test_run`, with same system access and risk as Pi's bash tool. Review source before installation. Tools are advisory and cannot prove semantic test quality, expected failure meaning, or complete filesystem chronology.
 
-Package is development-only and not published or released.
+Version 0.1.0 is release-candidate software. Full V1 matrix qualification is required before npm `latest` publication.
 
 ## Policy
 
@@ -71,7 +71,7 @@ Runs exact selected repository command under phase:
 - `broader`
 - `validation`
 
-Records exit status, duration, bounded output, and predeclared red reason. Stable token matching identifies a red candidate; agent must still inspect semantic cause. Passing red or unrelated/setup failure is invalid. Tool does not choose commands or install runners.
+Records exit status, duration, bounded output, and predeclared red reason. Exact stable-literal matching identifies a red candidate; agent must still inspect semantic cause. Passing red or unrelated/setup failure is invalid. Tool does not choose commands or install runners.
 
 ### `test_status`
 
@@ -108,23 +108,29 @@ Automatic activation is model-dependent. Use explicit command when routing must 
 
 Explicit invocation can evaluate normally excluded cases. It cannot authorize unsafe operations or false evidence.
 
-## Install for local development
+## Install
 
 Pi packages execute trusted TypeScript with full user permissions. Review package first.
 
-Global local-path install:
+From npm after release:
+
+```bash
+pi install npm:pi-test-driven-development@0.1.0
+```
+
+From pinned GitHub release:
+
+```bash
+pi install git:github.com/stijnVanHorenbeek/pi-test-driven-development@v0.1.0
+```
+
+Global local-path development install:
 
 ```bash
 pi install /absolute/path/to/test-driven-development
 ```
 
-Project-local install:
-
-```bash
-pi install /absolute/path/to/test-driven-development -l
-```
-
-Temporary run without settings change:
+Add `-l` for project-local settings. Temporary run without settings change:
 
 ```bash
 pi -e /absolute/path/to/test-driven-development
@@ -135,8 +141,6 @@ Inspect installed packages:
 ```bash
 pi list
 ```
-
-No npm or Git release source exists yet. Publication/release requires explicit approval.
 
 ## Disable and remove
 
