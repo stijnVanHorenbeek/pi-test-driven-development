@@ -11,6 +11,7 @@ test("author-attested preregistration matrix fixes multiple models and three rep
   assert.ok(spec.matrix.models.length >= 2);
   assert.equal(spec.matrix.repetitions, 3);
   assert.equal(new Set(spec.matrix.models.map((m) => `${m.provider}/${m.model}:${m.thinking}`)).size, spec.matrix.models.length);
+  assert.ok(spec.matrix.models.every((model) => model.provider === "openai-codex"));
   assert.equal(spec.matrix.amendments.at(-1)?.version, spec.matrix.version);
 });
 
@@ -23,6 +24,9 @@ test("case catalog covers required positive, negative, mixed, workflow, anti-pat
   assert.ok(spec.cases.some((item) => item.expected.skill_loaded));
   assert.ok(spec.cases.some((item) => !item.expected.skill_loaded));
   assert.ok(spec.cases.every((item) => item.task.trim().length > 0 && item.postcheck.length > 0));
+  for (const item of spec.cases.filter((value) => value.expected.mode === "tdd")) {
+    assert.ok(item.expected.red_output_pattern?.trim(), `${item.id} missing red_output_pattern`);
+  }
 });
 
 test("case ids are unique and fixture templates resolve", async () => {

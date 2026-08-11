@@ -20,7 +20,7 @@ Narrowest does not mean mockiest. Prefer real cheap collaborators and public beh
 
 Write or update focused desired-behavior test. Expectations must be independently derived and discriminating.
 
-Before run, state expected failure reason. With `test_run`, use shortest stable literal likely to identify contract in output (such as symbol or expected value), not guessed full framework sentence. Run exact focused command. Valid red requires:
+Before run, state expected failure reason using shortest stable behavior description, not a guessed full framework sentence. Run exact focused command with built-in `bash`. Valid red requires:
 
 - Intended test ran.
 - Exit is failing.
@@ -43,7 +43,7 @@ Improve names, duplication, and structure only while green. Do not mix new behav
 
 Use `tdd-attested` only with observed valid red before production mutation and observed green after it. Record command, expected and actual red reason, green result, broader checks, pre-existing failures, and residual risk.
 
-`test_context` can find repository-native commands. `test_run` can record phase evidence. `test_status` reports strongest supported label.
+Use built-in `read` and read-only `bash` to inspect repository-native commands. Preserve exact command output needed to report strongest supported evidence label truthfully.
 
 ## Test list, not test quota
 

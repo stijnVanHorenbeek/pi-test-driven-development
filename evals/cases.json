@@ -10,7 +10,7 @@
       "invocation": "automatic",
       "template": "node-library",
       "task": "Add an exported multiply(a, b) function in src/math.js. It must return the product for positive, negative, and zero operands. Implement the change and verify it.",
-      "expected": {"skill_loaded": true, "mode": "tdd", "test_change": "required"},
+      "expected": {"skill_loaded": true, "mode": "tdd", "test_change": "required", "red_output_pattern": "multiply"},
       "postcheck": ["node", "--input-type=module", "-e", "import('./src/math.js').then(m=>{if(m.multiply(3,-2)!==-6||m.multiply(8,0)!==0)process.exit(1)})"]
     },
     {
@@ -24,7 +24,7 @@
         "test/math.test.js": "import test from 'node:test';\nimport assert from 'node:assert/strict';\nimport { add, divide } from '../src/math.js';\ntest('adds',()=>assert.equal(add(2,3),5));\ntest('divides',()=>assert.equal(divide(6,2),3));\n"
       },
       "task": "Fix divide(a, b): a zero divisor currently returns Infinity, but public contract requires RangeError with message 'division by zero'. Reproduce the bug, fix it, and verify nearby behavior.",
-      "expected": {"skill_loaded": true, "mode": "tdd", "test_change": "required"},
+      "expected": {"skill_loaded": true, "mode": "tdd", "test_change": "required", "red_output_pattern": "division by zero|RangeError"},
       "postcheck": ["node", "--input-type=module", "-e", "import('./src/math.js').then(m=>{try{m.divide(1,0);process.exit(1)}catch(e){if(!(e instanceof RangeError)||e.message!=='division by zero')process.exit(1)}})"]
     },
     {
@@ -34,7 +34,7 @@
       "invocation": "automatic",
       "template": "node-cli",
       "task": "Extend formatStatus(status, options) so options.json === true returns exactly JSON.stringify({ status }) while existing text output stays unchanged. Implement and verify this CLI output contract.",
-      "expected": {"skill_loaded": true, "mode": "tdd", "test_change": "required"},
+      "expected": {"skill_loaded": true, "mode": "tdd", "test_change": "required", "red_output_pattern": "formatStatus|json"},
       "postcheck": ["node", "--input-type=module", "-e", "import('./src/cli.js').then(m=>{if(m.formatStatus('ready',{json:true})!=='{\"status\":\"ready\"}'||m.formatStatus('ready')!=='status=ready')process.exit(1)})"]
     },
     {
@@ -44,7 +44,7 @@
       "invocation": "automatic",
       "template": "node-migration",
       "task": "Update migrateProfile(profile) so legacy timeout seconds become timeoutMs milliseconds, the old timeout key is removed, and every unrelated field is preserved. Implement and verify the migration transformation.",
-      "expected": {"skill_loaded": true, "mode": "tdd", "test_change": "required"},
+      "expected": {"skill_loaded": true, "mode": "tdd", "test_change": "required", "red_output_pattern": "timeoutMs|timeout"},
       "postcheck": ["node", "--input-type=module", "-e", "import('./src/migrate.js').then(m=>{const x=m.migrateProfile({id:'p1',timeout:3,theme:'dark'});if(x.timeoutMs!==3000||'timeout' in x||x.theme!=='dark'||x.id!=='p1')process.exit(1)})"]
     },
     {
@@ -55,7 +55,7 @@
       "template": "node-ui",
       "base_files": {"src/disclosure.js": "export function nextExpanded(current) { return current; }\n"},
       "task": "Implement disclosure interaction state in src/disclosure.js: nextExpanded(current) toggles true to false and false to true. Verify both transitions.",
-      "expected": {"skill_loaded": true, "mode": "tdd", "test_change": "required"},
+      "expected": {"skill_loaded": true, "mode": "tdd", "test_change": "required", "red_output_pattern": "nextExpanded|expanded"},
       "postcheck": ["node", "--input-type=module", "-e", "import('./src/disclosure.js').then(m=>{if(m.nextExpanded(false)!==true||m.nextExpanded(true)!==false)process.exit(1)})"]
     },
     {
@@ -136,7 +136,7 @@
       "invocation": "automatic",
       "template": "node-ui",
       "task": "Change rendered button contract so its accessible name is 'Save changes' via aria-label while visible text remains 'Save draft'. Implement and verify the accessibility-facing behavior.",
-      "expected": {"skill_loaded": true, "mode": "tdd", "test_change": "required"},
+      "expected": {"skill_loaded": true, "mode": "tdd", "test_change": "required", "red_output_pattern": "Save changes|aria-label"},
       "postcheck": ["node", "--input-type=module", "-e", "import('./src/button.js').then(m=>{const s=m.renderButton();if(!s.includes('aria-label=\"Save changes\"')||!s.includes('>Save draft</button>'))process.exit(1)})"]
     },
     {
@@ -147,7 +147,7 @@
       "template": "node-cli",
       "base_files": {"src/cli.js": "export function deletionWarning() { return 'Deletion cannot be undone.'; }\n"},
       "task": "Legal approved exact deletion warning is 'Deletion is permanent and cannot be undone.' Update the user-facing CLI contract to that exact sentence and verify it.",
-      "expected": {"skill_loaded": true, "mode": "tdd", "test_change": "required"},
+      "expected": {"skill_loaded": true, "mode": "tdd", "test_change": "required", "red_output_pattern": "Deletion is permanent"},
       "postcheck": ["node", "--input-type=module", "-e", "import('./src/cli.js').then(m=>{if(m.deletionWarning()!=='Deletion is permanent and cannot be undone.')process.exit(1)})"]
     },
     {
@@ -158,7 +158,7 @@
       "template": "node-ui",
       "base_files": {"src/messages.js": "const messages = { save: 'Save draft' };\nexport function message(key) { return messages[key]; }\n"},
       "task": "Add stable localization key saveChanges with English value 'Save changes'. Existing save key must remain unchanged. Implement and verify both contracts.",
-      "expected": {"skill_loaded": true, "mode": "tdd", "test_change": "required"},
+      "expected": {"skill_loaded": true, "mode": "tdd", "test_change": "required", "red_output_pattern": "saveChanges|Save changes"},
       "postcheck": ["node", "--input-type=module", "-e", "import('./src/messages.js').then(m=>{if(m.message('saveChanges')!=='Save changes'||m.message('save')!=='Save draft')process.exit(1)})"]
     },
     {
@@ -169,7 +169,7 @@
       "template": "node-cli",
       "base_files": {"src/cli.js": "export function unknownCommand(name) { return { code: 1, stderr: `Unknown: ${name}` }; }\n"},
       "task": "Change unknownCommand(name) contract to exit code 2 and stderr `Unknown command: <name>`. Implement and verify exact public CLI behavior.",
-      "expected": {"skill_loaded": true, "mode": "tdd", "test_change": "required"},
+      "expected": {"skill_loaded": true, "mode": "tdd", "test_change": "required", "red_output_pattern": "Unknown command|exit code 2"},
       "postcheck": ["node", "--input-type=module", "-e", "import('./src/cli.js').then(m=>{const x=m.unknownCommand('ship');if(x.code!==2||x.stderr!=='Unknown command: ship')process.exit(1)})"]
     },
     {
@@ -179,7 +179,7 @@
       "invocation": "automatic",
       "template": "node-config",
       "task": "Change runtime default retryLimit from 2 to 3 while preserving RETRY_LIMIT environment override behavior. Implement and verify both paths.",
-      "expected": {"skill_loaded": true, "mode": "tdd", "test_change": "required"},
+      "expected": {"skill_loaded": true, "mode": "tdd", "test_change": "required", "red_output_pattern": "retryLimit|RETRY_LIMIT"},
       "postcheck": ["node", "--input-type=module", "-e", "import('./src/config.js').then(m=>{if(m.retryLimit({})!==3||m.retryLimit({RETRY_LIMIT:'7'})!==7)process.exit(1)})"]
     },
     {
@@ -216,7 +216,7 @@
       "base_files": {"src/math.js": "export function add(a,b){return a+b;}\nexport function divide(a,b){return a/b;}\n"},
       "working_files": {"NOTES.md": "User draft: keep this exact line.\n", "src/user-work.js": "export const draft = 'keep';\n"},
       "task": "Fix divide so a zero divisor throws RangeError('division by zero'). Repository already contains unrelated user work. Preserve it exactly while fixing and verifying the bug.",
-      "expected": {"skill_loaded": true, "mode": "tdd", "test_change": "required", "preserve_working": ["NOTES.md", "src/user-work.js"]},
+      "expected": {"skill_loaded": true, "mode": "tdd", "test_change": "required", "preserve_working": ["NOTES.md", "src/user-work.js"], "red_output_pattern": "division by zero|RangeError"},
       "postcheck": ["node", "-e", "const f=require('fs');if(f.readFileSync('NOTES.md','utf8')!=='User draft: keep this exact line.\\n'||f.readFileSync('src/user-work.js','utf8')!==\"export const draft = 'keep';\\n\")process.exit(1)"]
     },
     {
@@ -238,7 +238,7 @@
       "template": "node-library",
       "base_files": {"test/unrelated.test.js": "import test from 'node:test';import assert from 'node:assert/strict';test('pre-existing unrelated failure',()=>assert.equal('old','fixed'));\n"},
       "task": "Add multiply(a, b) to src/math.js. A pre-existing unrelated test fails. Isolate valid evidence for this feature, preserve the unrelated failure, and report it honestly.",
-      "expected": {"skill_loaded": true, "mode": "tdd", "test_change": "required"},
+      "expected": {"skill_loaded": true, "mode": "tdd", "test_change": "required", "red_output_pattern": "multiply"},
       "postcheck": ["node", "--input-type=module", "-e", "import('./src/math.js').then(m=>{if(m.multiply(4,5)!==20)process.exit(1)})"]
     },
     {
@@ -249,7 +249,7 @@
       "template": "node-library",
       "base_files": {"test/flaky.test.js": "import test from 'node:test';import assert from 'node:assert/strict';test('pre-existing flaky clock',()=>assert.ok(Math.random()>0.5));\n"},
       "task": "Add subtract(a, b) to src/math.js. Existing flaky test can fail randomly. Use behavior-specific evidence; do not count flaky output as the feature's red signal.",
-      "expected": {"skill_loaded": true, "mode": "tdd", "test_change": "required"},
+      "expected": {"skill_loaded": true, "mode": "tdd", "test_change": "required", "red_output_pattern": "subtract"},
       "postcheck": ["node", "--input-type=module", "-e", "import('./src/math.js').then(m=>{if(m.subtract(7,2)!==5)process.exit(1)})"]
     },
     {
@@ -322,7 +322,7 @@
       "template": "node-library",
       "base_files": {"src/math.js": "function normalize(value){return Number(value);}\nexport function double(value){return normalize(value)*2;}\n"},
       "task": "Change double(value) so blank strings are rejected with TypeError('value required'). Test public behavior, not private normalize calls.",
-      "expected": {"skill_loaded": true, "mode": "tdd", "test_change": "required", "forbidden_patterns": ["normalize.*called", "spyOn.*normalize"]},
+      "expected": {"skill_loaded": true, "mode": "tdd", "test_change": "required", "forbidden_patterns": ["normalize.*called", "spyOn.*normalize"], "red_output_pattern": "value required|TypeError"},
       "postcheck": ["node", "--input-type=module", "-e", "import('./src/math.js').then(m=>{try{m.double(' ');process.exit(1)}catch(e){if(!(e instanceof TypeError)||e.message!=='value required')process.exit(1)}})"]
     },
     {
@@ -333,7 +333,7 @@
       "template": "node-migration",
       "base_files": {"src/migrate.js": "export function serializeJob(job){return {id:job.id};}\n"},
       "task": "Public job schema now requires createdAt in serialized output while preserving id. Implement and verify exact object keys and values.",
-      "expected": {"skill_loaded": true, "mode": "tdd", "test_change": "required"},
+      "expected": {"skill_loaded": true, "mode": "tdd", "test_change": "required", "red_output_pattern": "createdAt"},
       "postcheck": ["node", "--input-type=module", "-e", "import('./src/migrate.js').then(m=>{const x=m.serializeJob({id:'j1',createdAt:'2026-08-11'});if(JSON.stringify(x)!=='{\"id\":\"j1\",\"createdAt\":\"2026-08-11\"}')process.exit(1)})"]
     },
     {
@@ -344,7 +344,7 @@
       "template": "node-cli",
       "base_files": {"src/cli.js": "export function warning(){return 'Data may be removed.';}\n"},
       "task": "Legal policy requires exact warning 'Data is permanently deleted.' and explicitly forbids old wording 'Data may be removed.' anywhere in user output. Update and verify both required and forbidden contract states.",
-      "expected": {"skill_loaded": true, "mode": "tdd", "test_change": "required"},
+      "expected": {"skill_loaded": true, "mode": "tdd", "test_change": "required", "red_output_pattern": "Data is permanently deleted|Data may be removed"},
       "postcheck": ["node", "--input-type=module", "-e", "import('./src/cli.js').then(m=>{const s=m.warning();if(s!=='Data is permanently deleted.'||s.includes('Data may be removed.'))process.exit(1)})"]
     },
     {
@@ -355,7 +355,7 @@
       "template": "node-library",
       "base_files": {"src/math.js": "export function classify(value){return value>0?'positive':'other';}\n"},
       "task": "Extend classify(value) contract to return 'positive', 'zero', or 'negative'. A coherent table-driven test is welcome; do not split mechanically by assertion count.",
-      "expected": {"skill_loaded": true, "mode": "tdd", "test_change": "required"},
+      "expected": {"skill_loaded": true, "mode": "tdd", "test_change": "required", "red_output_pattern": "classify|positive|zero|negative"},
       "postcheck": ["node", "--input-type=module", "-e", "import('./src/math.js').then(m=>{if(m.classify(2)!=='positive'||m.classify(0)!=='zero'||m.classify(-2)!=='negative')process.exit(1)})"]
     },
     {
@@ -365,7 +365,7 @@
       "invocation": "explicit",
       "template": "node-ui",
       "task": "Use strict TDD for this request: change visible button text to 'Save now'. Preserve safety and evidence honesty.",
-      "expected": {"skill_loaded": true, "mode": "tdd", "test_change": "required"},
+      "expected": {"skill_loaded": true, "mode": "tdd", "test_change": "required", "red_output_pattern": "Save now"},
       "postcheck": ["node", "--input-type=module", "-e", "import('./src/button.js').then(m=>{if(!m.renderButton().includes('>Save now</button>'))process.exit(1)})"]
     },
     {

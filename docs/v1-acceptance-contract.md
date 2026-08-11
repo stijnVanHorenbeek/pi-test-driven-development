@@ -8,9 +8,9 @@ Primary skill name: `test-driven-development`
 
 ## 1. Purpose
 
-V1 provides a Pi-native testing-policy skill plus dynamically activated advisory tools. It uses TDD when a valuable automated test can drive changed observable behavior, while selecting preservation, regression, validation-only, or verification-limited work when strict red-first TDD would be false or wasteful.
+V1 provides a Pi-native, skill-only testing policy. It uses TDD when a valuable automated test can drive changed observable behavior, while selecting preservation, regression, validation-only, or verification-limited work when strict red-first TDD would be false or wasteful.
 
-Tests follow observable contracts and plausible regression risk. They do not follow changed lines, file types, function counts, or coverage quotas. Tools improve repository discovery and evidence bookkeeping; they do not replace engineering judgment.
+Tests follow observable contracts and plausible regression risk. They do not follow changed lines, file types, function counts, or coverage quotas. Agent uses Pi's built-in repository tools directly; package registers no custom tools or extension hooks.
 
 ## 2. Decision priority
 
@@ -126,7 +126,7 @@ Exact `/skill:test-driven-development` invocation is deterministic and may evalu
 - Red validity and green/regression gate.
 - Evidence labels.
 - Exact reference-loading triggers.
-- Exact advisory-tool loading and use triggers.
+- Built-in repository-tool use and truthful completion reporting.
 
 Acceptance limits:
 
@@ -139,85 +139,39 @@ Acceptance limits:
 
 V1 includes:
 
-- Explicit Pi package manifest exposing one skill resource tree and one TypeScript extension entrypoint.
+- Explicit Pi package manifest exposing one skill resource tree.
 - One skill named `test-driven-development`.
 - Progressive references.
-- Dynamically activated advisory tools for polyglot test-context discovery, mode selection, evidence-bearing command runs, and status reporting.
-- TypeScript deterministic policy/package tests using Node's native test runner through `tsx`, plus `tsc --noEmit`.
+- Direct guidance for Pi's built-in `read`, `bash`, `edit`, and `write` tools.
+- TypeScript deterministic package/evaluation tests using Node's native test runner through `tsx`, plus `tsc --noEmit`.
 - Preregistered routing and workflow fixtures.
-- TypeScript evaluation harness built on Pi SDK session and tool events.
+- TypeScript evaluation harness built on Pi SDK session and built-in tool events.
 - README with install, use, disable, remove, provenance, and evaluation limits.
 - MIT license and bounded upstream inventory.
 
 V1 excludes:
 
-- Output style, prompt template, theme, global instruction, or filesystem enforcement hook.
+- Runtime extension, custom tool, output style, prompt template, theme, global instruction, or filesystem enforcement hook.
 - Automatic revert/delete logic.
-- Blocking or rewriting built-in edit, write, or bash calls to impose TDD sequence.
+- Blocking or rewriting built-in `edit`, `write`, or `bash` calls to impose TDD sequence.
 - Coverage quotas or tests-per-edit quotas.
 - Publication, release, global installation, or modification of the currently installed global skill.
 - Claims that static tests prove probabilistic routing or that model output proves semantic correctness in every repository.
 
-Enforcing tool interception is rejected for V1: it would be intrusive, incomplete for shell-based edits and external tools, and unsafe in dirty trees. Advisory tools may downgrade unsupported evidence claims but never block normal project tools.
+Tool interception is rejected: it would duplicate Pi's built-ins, add model-facing schemas and bookkeeping calls, remain incomplete for shell-based edits and external tools, and be unsafe in dirty trees.
 
-## 10. Advisory tool contract
+## 10. Built-in tool workflow contract
 
-Package extension defers advisory tool registration and activation until:
+Package registers no model-facing tools. After skill loads, agent continues using Pi's existing tool set:
 
-- A successful `read` tool result targets this package's exact `SKILL.md`; or
-- Exact `/skill:test-driven-development` invocation resolves to this package's skill command provenance.
+- Inspect repository status, docs, manifests, scripts, CI configuration, and existing tests with built-in `read` and read-only `bash`.
+- Choose repository-native commands from source evidence; do not install a runner merely to satisfy process.
+- State expected red reason before execution, then run exact focused and broader commands with built-in `bash`.
+- Make visible source mutations with built-in `edit` or `write`, preserving unrelated dirty paths.
+- Judge red semantically. Exit code and matching text cannot promote setup, syntax, flaky, timeout, or unrelated failures.
+- Report exact observed commands and outcomes, pre-existing failures, and residual risk, then end with `Evidence: <label>` using strongest supported label.
 
-Activation registers each tool once and preserves every currently active tool. No package tool overrides a built-in tool. Additive dynamic-tool loading must not inject an always-on system prompt.
-
-### 10.1 `test_context`
-
-Perform a bounded, read-only repository scan and return evidence-backed candidates:
-
-- Git root, dirty paths, and nested workspace roots.
-- Manifests, lockfiles, test configs, existing test roots, and repository wrappers.
-- Candidate focused, broader, build, lint, typecheck, accessibility, and validation commands with source path and confidence.
-- Ambiguity, missing runner, unavailable dependency, and expensive or unsafe environment signals.
-
-Initial recognizers cover repository-native signals for JavaScript/TypeScript, Python, Go, Rust, Ruby, Java/Kotlin with Gradle or Maven, .NET, Elixir, PHP, Swift, Dart/Flutter, Bazel, CMake/CTest, Make, Just, and Task. Recognition is evidence, not permission to execute. Unknown and polyglot repositories return bounded candidates instead of guessing. Tool never installs a framework or dependency.
-
-### 10.2 `test_policy`
-
-Accept structured task facts and return recommended mode, evidence label, required next proof, and unresolved questions. Inputs distinguish:
-
-- Change kind and observable contract risk.
-- New work, pure refactor, pre-existing implementation, or no production behavior.
-- Existing coverage sufficiency.
-- Automation feasibility, safety, flakiness, and proportional cost.
-- Explicit strict-TDD request.
-
-Result is deterministic for supplied facts, but supplied facts remain model/user assertions. Tool cannot decide product value or semantic contract importance without evidence.
-
-### 10.3 `test_run`
-
-Run the agent-selected repository command with explicit phase:
-
-- `baseline`, `red`, `green`, `regression`, `broader`, or `validation`.
-- Record exact command, cwd, start/end order, exit status, duration, bounded output, and declared expected red reason.
-- Red is a supported candidate only when command exits nonzero and stable tokens from the predeclared expected-failure reason appear. Agent must still inspect semantic cause; token matching cannot promote setup, typo, flaky, or unrelated failure to valid red.
-- Non-red phases expect exit zero but retain failures honestly.
-- No command is selected or installed automatically.
-
-Tool has same command-execution risk as built-in bash and must document it. Output follows Pi truncation limits. Cancellation and cwd are respected.
-
-### 10.4 `test_status`
-
-Summarize current session ledger:
-
-- Recommended and supported evidence labels.
-- Observed command phases and outcomes.
-- Built-in edit/write mutations observed between phases, classified by discovered test paths when possible.
-- Pre-existing, unrelated, flaky, or infrastructure failures.
-- Opaque shell-mutation and unsupported-ordering warnings.
-- Missing proof and residual risk.
-
-`tdd-attested` requires observed valid red, subsequent production mutation through observable tool evidence, and later focused green. When sequence cannot be established, status downgrades to the strongest supported label. This is bounded session evidence, not proof of semantic test quality.
-
-Tool state persists through tool-result details for session branching and reconstructs on session start. No global or project file is modified for bookkeeping.
+No runtime ledger or package bookkeeping file is created. Built-in tool-event chronology supports evaluation, but opaque shell mutation or missing events must remain unsupported rather than inferred from final diff or prose.
 
 ## 11. Upstream pin and provenance
 
@@ -281,7 +235,7 @@ Agent-specific reproduction-test evidence remains secondary and provisional. V1 
 Preregister before editing skill prompts:
 
 - `evals/fixtures/templates.json` fixes reusable fixture-repository baselines.
-- `evals/cases.json` fixes prompts, routing labels, expected modes, workspace overlays, and outcome contracts.
+- `evals/cases.json` fixes prompts, routing labels, expected modes, feature-specific red-output patterns, workspace overlays, and outcome contracts.
 - `evals/v1-matrix.json` fixes providers, models, thinking levels, repetitions, isolation, and acceptance thresholds.
 
 Required scenario coverage:
@@ -295,11 +249,10 @@ Required scenario coverage:
 
 ### 13.1 Static/package gates
 
-- Manifest exposes exactly `./skills` through `pi.skills` and one intended TypeScript entrypoint through `pi.extensions`.
+- Manifest exposes exactly `./skills` through `pi.skills` and no runtime extension.
 - Package contains one valid skill; references resolve one level below it.
-- Extension registers exactly the advisory tool surface only after package skill provenance activates it.
-- Polyglot recognizer fixtures cover every declared ecosystem and bounded unknown/monorepo behavior.
-- Evidence ledger tests cover valid and invalid red, preservation, regression, validation-only, opaque mutation, branch reconstruction, and truthful downgrade.
+- Skill names built-in repository tools and contains no custom advisory-tool dependency.
+- Evaluation inference tests cover built-in valid and invalid red, preservation, regression, validation-only, opaque mutation, and truthful downgrade.
 - Critical user-work safety, evidence honesty, mode, and contractual-copy boundaries are present.
 - Static tests do not pretend required wording proves routing behavior.
 - `npm pack --dry-run --json` includes runtime/docs and excludes tests, eval results, caches, prompt templates, and themes.
@@ -308,9 +261,9 @@ Required scenario coverage:
 
 - Pi SDK sessions run in temporary fixture repositories with in-memory settings and sessions.
 - `ModelRuntime` uses isolated copied auth/model catalog paths; global settings and packages are not loaded.
-- Custom `ResourceLoader` exposes only package skill and extension; ambient extensions, skills, prompts, themes, context files, trust, sessions, and startup network are absent.
+- Custom `ResourceLoader` exposes only package skill resources; ambient extensions, skills, prompts, themes, context files, trust, sessions, and startup network are absent.
 - Skill loading is counted only from a successful `read` tool event for exact `SKILL.md`.
-- Separate CLI/RPC smoke verifies package manifest discovery, exact skill command provenance, and dynamic tool activation under real Pi package loading.
+- Separate CLI/RPC and SDK smoke verifies package manifest discovery, exact skill command provenance, and unchanged built-in tool set under real Pi package loading.
 - Each preregistered model/case cell runs three times.
 - Each positive auto-route case loads in at least two of three repetitions per model.
 - Negative cases never load in any repetition.
@@ -322,14 +275,14 @@ Workspace fixtures evaluate observable artifacts and tool evidence, not response
 
 - Required file state and preserved dirty/user files.
 - Whether test files changed when required or stayed unchanged when a new test is not justified.
-- TDD cases: test mutation and behavior-specific failing command before production mutation, then focused green after production mutation, when event evidence supports that ordering.
+- TDD cases: test mutation, completed feature-specific failing command matching preregistered red-output evidence before production mutation starts, then focused green after production mutation completes.
 - Preservation: green baseline before production mutation and relevant post-change green.
 - Regression verification: useful test added without rewriting pre-existing implementation to manufacture red.
 - Validation-only: desired artifact plus proportionate validation and no artificial permanent test.
 - Verification-limited: strongest available validation plus explicit residual gap.
 - Forbidden anti-pattern artifacts, including absence-only copy tests, whole-component snapshots for tiny copy, and newly introduced test frameworks for trivial edits.
 
-Event ordering is marked unsupported rather than guessed when a model mutates files through an opaque shell command. Unsupported, timed-out, failed, or missing cells remain visible and block a complete V1 claim.
+Event ordering uses both tool start and completion sequence. Parallel overlap, opaque shell mutation, invalid or unrelated red, unsupported command composition, timed-out, failed, or missing evidence remains unsupported and blocks a complete V1 claim.
 
 ### 13.4 Matrix and claim rules
 
@@ -344,9 +297,9 @@ Event ordering is marked unsupported rather than guessed when a model mutates fi
 
 README must document:
 
-- Purpose, policy matrix, modes, evidence labels, and advisory-tool boundaries.
+- Purpose, policy matrix, modes, evidence labels, and skill-only runtime boundary.
 - Automatic model-dependent routing and deterministic `/skill:test-driven-development` invocation.
-- Dynamic tool activation, polyglot recognition limits, command-execution risk, and ways to disable extension independently.
+- Built-in tool workflow, repository-evidence limits, and ways to disable skill resources.
 - Local, temporary, project, disable, and remove flows.
 - Evaluation commands, cost warning, preregistration, smoke/full distinction, and honest current evidence.
 - Upstream repository, exact commit, MIT attribution, and adaptation limits.
@@ -360,12 +313,12 @@ Accepted V1 assumptions:
 
 - Skill guidance is language-agnostic; examples are illustrative, not authoritative runner docs.
 - Node.js, npm, Git, `tsx`, and TypeScript are available for package development and evaluation. Package does not rely on Node native TypeScript stripping.
-- Pi loads the shipped TypeScript extension through its documented jiti runtime.
+- Pi loads package skill resources without a runtime extension.
 - Pi SDK is the primary live-evaluation interface; Pi CLI is required for package-discovery smoke tests.
 - Provider auth can be copied into an isolated temporary Pi config directory without changing global settings.
 - Automatic routing is probabilistic; explicit invocation is deterministic.
-- Tool-event evidence cannot always reconstruct filesystem history, especially for opaque shell mutations; advisory status must downgrade rather than guess.
-- Polyglot command discovery is based on bounded repository signals and cannot encode every custom build system.
+- Built-in tool-event evidence cannot always reconstruct filesystem history, especially for opaque shell mutations; evaluation must mark unsupported evidence rather than guess.
+- Runner discovery is based on repository docs, manifests, scripts, CI configuration, and existing tests; examples cannot encode every custom build system.
 - Full live matrix has provider cost and can remain incomplete until explicitly run; incomplete evidence blocks release-quality routing claims, not package implementation.
 
 Changes to product name, release scope, publication, blocking enforcement, global installation, or matrix labels require contract amendment and user approval where authority changes.

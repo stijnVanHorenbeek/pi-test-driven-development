@@ -6,27 +6,12 @@ interface EventEvidenceOptions {
 
 interface TimelineEntry {
   sequence: number;
+  completionSequence?: number;
   toolCallId: string;
   toolName: string;
   args: unknown;
   isError?: boolean;
   resultText: string;
-  resultMetadata?: Record<string, unknown>;
-}
-
-function advisoryMetadata(toolName: string, result: unknown): Record<string, unknown> | undefined {
-  if (!result || typeof result !== "object") return undefined;
-  const details = (result as { details?: any }).details;
-  if (toolName === "test_policy" && details?.decision) {
-    return { mode: details.decision.mode, evidenceLabel: details.decision.evidenceLabel };
-  }
-  if (toolName === "test_status" && details?.status) {
-    return { decision: details.status.decision, supportedLabel: details.status.supportedLabel };
-  }
-  if (toolName === "test_run" && details?.run) {
-    return { phase: details.run.phase, exitCode: details.run.exitCode, valid: details.run.valid };
-  }
-  return undefined;
 }
 
 function resultText(result: unknown) {
@@ -81,9 +66,13 @@ export class EventEvidence {
       const entry = this.#pending.get(id);
       if (!entry) return;
       entry.isError = Boolean(event.isError);
+      entry.completionSequence = this.#sequence++;
       const text = resultText(event.result);
-      entry.resultText = text.length <= this.#maxResultChars ? text : `${text.slice(0, this.#maxResultChars)}…`;
-      entry.resultMetadata = advisoryMetadata(entry.toolName, event.result);
+      if (text.length <= this.#maxResultChars) entry.resultText = text;
+      else if (entry.toolName === "bash") {
+        const head = Math.floor(this.#maxResultChars / 2);
+        entry.resultText = `${text.slice(0, head)}…${text.slice(-(this.#maxResultChars - head))}`;
+      } else entry.resultText = `${text.slice(0, this.#maxResultChars)}…`;
       this.#pending.delete(id);
       if (entry.toolName === "read") this.#recordRead(entry);
       return;

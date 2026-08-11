@@ -1,9 +1,9 @@
 # Evaluations
 
-These files preregister routing and workflow evaluation before skill or extension prompt implementation.
+These files preregister routing and workflow evaluation before initial skill implementation. Matrix amendments 4–8 record migration to skill-only runtime, hardened built-in tool evidence, transparent Codex thinking-level tuning, and independent-review fixes.
 
 - `v1-matrix.json`: models, repetitions, isolation, and gates.
-- `cases.json`: natural tasks, routing labels, policy modes, fixture overlays, and postchecks.
+- `cases.json`: natural tasks, routing labels, policy modes, feature-specific red-output patterns, fixture overlays, and postchecks.
 - `fixtures/templates.json`: reusable fixture-repository baselines and production/test path signals.
 - `run-evals.ts`: Pi SDK runner after implementation.
 
@@ -16,7 +16,7 @@ Runner creates temporary Git repositories by copying a template, applying each c
 
 ## Evidence
 
-SDK event capture records successful exact `SKILL.md` reads, dynamic tool activation, tool order, command evidence, model identity, usage/cost when available, final text, final diff, postcheck result, and preserved working-file hashes. Hidden reasoning content is not stored.
+SDK event capture records successful exact `SKILL.md` reads, built-in tool order, command evidence, model identity, usage/cost when available, final text, final diff, postcheck result, and preserved working-file hashes. Hidden reasoning content is not stored.
 
 A failed, timed-out, missing, stale, or unsupported cell remains visible. Opaque shell mutations cannot establish exact edit order and must be marked unsupported rather than inferred.
 

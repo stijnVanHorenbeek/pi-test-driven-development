@@ -18,6 +18,7 @@ export interface EvaluationCase {
     test_change: "required" | "forbidden" | "optional";
     preserve_working?: string[];
     forbidden_patterns?: string[];
+    red_output_pattern?: string;
   };
   postcheck: string[];
 }

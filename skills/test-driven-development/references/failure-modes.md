@@ -26,7 +26,7 @@ Use focused command that isolates changed contract. Do not silently fix or suppr
 
 ## No runner or unavailable dependency
 
-Do not add framework automatically. Inspect repository docs and `test_context` candidates. Use strongest safe alternative: typecheck, build, lint, parser/schema validation, direct pure-function probe, rendered inspection, manual user flow, or dry run.
+Do not add framework automatically. Inspect repository docs, manifests, scripts, and CI config with built-in `read` or read-only `bash`. Use strongest safe alternative: typecheck, build, lint, parser/schema validation, direct pure-function probe, rendered inspection, manual user flow, or dry run.
 
 ## Unsafe or expensive environment
 
@@ -34,7 +34,7 @@ Never trigger real charges, production mutations, destructive migrations, extern
 
 ## Opaque mutations
 
-Shell scripts can mutate files outside visible edit/write events. `test_status` must downgrade sequence claims when order cannot be established. Do not infer TDD from final diff.
+Shell scripts can mutate files outside visible `edit` or `write` events. Downgrade sequence claims when order cannot be established. Do not infer TDD from final diff.
 
 ## Reporting
 

@@ -79,19 +79,45 @@ test("records bounded mutation and command timeline without full tool output", (
   assert.ok((summary.timeline[0]?.resultText.length ?? 0) <= 21);
 });
 
-test("keeps bounded advisory status metadata when rendered JSON is truncated", () => {
-  const events = new EventEvidence(skillPath, { maxResultChars: 10 });
-  events.consume({ type: "tool_execution_start", toolCallId: "s", toolName: "test_status", args: {} });
+test("keeps bash failure context and exit evidence when bounded output is truncated", () => {
+  const events = new EventEvidence(skillPath, { maxResultChars: 80 });
+  events.consume({ type: "tool_execution_start", toolCallId: "b", toolName: "bash", args: { command: "npm test" } });
   events.consume({
     type: "tool_execution_end",
-    toolCallId: "s",
-    toolName: "test_status",
+    toolCallId: "b",
+    toolName: "bash",
+    isError: false,
+    result: { content: [{ type: "text", text: `EXPECTED_MULTIPLY_FAILURE\n${"x".repeat(200)}\nCommand exited with code 1` }] },
+  });
+  const result = events.summary().timeline[0]?.resultText ?? "";
+  assert.match(result, /EXPECTED_MULTIPLY_FAILURE/);
+  assert.match(result, /Command exited with code 1/);
+});
+
+test("records start and completion order for parallel-safe chronology", () => {
+  const events = new EventEvidence(skillPath);
+  events.consume({ type: "tool_execution_start", toolCallId: "test", toolName: "bash", args: { command: "npm test" } });
+  events.consume({ type: "tool_execution_start", toolCallId: "edit", toolName: "edit", args: { path: "src/math.js" } });
+  events.consume({ type: "tool_execution_end", toolCallId: "edit", toolName: "edit", result: {}, isError: false });
+  events.consume({ type: "tool_execution_end", toolCallId: "test", toolName: "bash", result: {}, isError: false });
+  const [testRun, edit] = events.summary().timeline;
+  assert.ok((testRun?.completionSequence ?? 0) > (edit?.sequence ?? 0));
+  assert.ok((edit?.completionSequence ?? 0) < (testRun?.completionSequence ?? 0));
+});
+
+test("records built-in evidence without interpreting custom tool metadata", () => {
+  const events = new EventEvidence(skillPath, { maxResultChars: 10 });
+  events.consume({ type: "tool_execution_start", toolCallId: "b", toolName: "bash", args: { command: "npm test" } });
+  events.consume({
+    type: "tool_execution_end",
+    toolCallId: "b",
+    toolName: "bash",
     isError: false,
     result: {
       content: [{ type: "text", text: "x".repeat(1000) }],
-      details: { status: { decision: "tdd", supportedLabel: "tdd-attested", runs: [{ output: "secretly huge" }] } },
+      details: { status: { supportedLabel: "tdd-attested" } },
     },
   });
-  assert.deepEqual(events.summary().timeline[0]?.resultMetadata, { decision: "tdd", supportedLabel: "tdd-attested" });
-  assert.doesNotMatch(JSON.stringify(events.summary().timeline[0]?.resultMetadata), /secretly huge/);
+  assert.equal(events.summary().timeline[0]?.toolName, "bash");
+  assert.doesNotMatch(JSON.stringify(events.summary().timeline[0]), /supportedLabel/);
 });

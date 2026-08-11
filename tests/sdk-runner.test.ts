@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 
-import { aggregateResults, createIsolatedAgentDir, extractObservedLabel, extractObservedMode, inferObservedLabel } from "../evals/lib/sdk-runner.ts";
+import { aggregateResults, createIsolatedAgentDir, inferObservedWorkflow } from "../evals/lib/sdk-runner.ts";
 
 const acceptance = {
   automatic_positive_load_minimum_per_three: 2,
@@ -29,44 +29,109 @@ test("isolated Pi directory copies only auth and model catalog material", async 
   await isolated.cleanup();
 });
 
-test("extracts policy mode and supported label from advisory tool evidence only", () => {
+test("infers TDD only from behavior-specific, causally ordered built-in evidence", () => {
   const timeline = [
-    { toolName: "read", resultText: "tdd" },
-    { toolName: "test_policy", resultText: "truncated", resultMetadata: { mode: "preservation" } },
-    { toolName: "test_status", resultText: "truncated", resultMetadata: { decision: "preservation", supportedLabel: "preservation-verified" } },
+    { sequence: 1, completionSequence: 2, toolName: "edit", args: { path: "test/math.test.js" }, resultText: "ok" },
+    { sequence: 3, completionSequence: 4, toolName: "bash", args: { command: "npm test" }, resultText: "multiply is not exported\nCommand exited with code 1" },
+    { sequence: 5, completionSequence: 6, toolName: "edit", args: { path: "src/math.js" }, resultText: "ok" },
+    { sequence: 7, completionSequence: 8, toolName: "bash", args: { command: "npm test" }, resultText: "pass" },
   ];
-  assert.equal(extractObservedMode(timeline), "preservation");
-  assert.equal(extractObservedLabel(timeline), "preservation-verified");
-  assert.equal(extractObservedMode([{ toolName: "bash", resultText: '{"mode":"tdd"}' }]), null);
-  assert.equal(extractObservedLabel([{ toolName: "test_policy", resultText: '{"evidenceLabel":"tdd-attested"}' }]), null);
-  assert.equal(extractObservedMode([{ toolName: "test_status", resultText: "truncated", resultMetadata: { supportedLabel: "verification-limited" } }]), "verification-limited");
-  assert.equal(extractObservedLabel([
-    { toolName: "test_status", resultText: "truncated", resultMetadata: { supportedLabel: "tdd-attested" } },
-    { toolName: "edit", resultText: "ok" },
-  ]), null);
-  assert.equal(extractObservedLabel([
-    { toolName: "test_status", resultText: "truncated", resultMetadata: { supportedLabel: "tdd-attested" } },
-    { toolName: "bash", args: { command: "git diff --check && git status --short" }, resultText: "ok" },
-  ]), "tdd-attested");
+  assert.deepEqual(inferObservedWorkflow(timeline, "Evidence: tdd-attested", "multiply"), {
+    claimedLabel: "tdd-attested",
+    observedMode: "tdd",
+    observedLabel: "tdd-attested",
+  });
+  for (const invalid of [
+    timeline.map((entry) => entry.sequence === 3 ? { ...entry, resultText: "Error: Cannot find module multiply\nCommand exited with code 1" } : entry),
+    timeline.map((entry) => entry.sequence === 3 ? { ...entry, resultText: "pre-existing unrelated failure\nCommand exited with code 1" } : entry),
+    timeline.map((entry) => entry.sequence === 3 ? { ...entry, resultText: "✔ multiply works\n✖ pre-existing unrelated failure\nCommand exited with code 1" } : entry),
+    timeline.map((entry) => entry.sequence === 3 ? { ...entry, args: { command: "npm test $(node mutate.js)" } } : entry),
+    timeline.map((entry) => entry.sequence === 3 ? { ...entry, args: { command: "npm test \"$(node mutate.js)\"" } } : entry),
+    timeline.map((entry) => entry.sequence === 3 ? { ...entry, completionSequence: 6 } : entry),
+    [
+      ...timeline.slice(0, 2),
+      { ...timeline[2], completionSequence: 9 },
+      { sequence: 6, completionSequence: 7, toolName: "edit", args: { path: "src/other.js" }, resultText: "ok" },
+      { ...timeline[3], sequence: 8, completionSequence: 10 },
+    ],
+    [
+      { sequence: 1, completionSequence: 2, toolName: "edit", args: { path: "src/early.js" }, resultText: "ok" },
+      ...timeline.map((entry) => ({ ...entry, sequence: entry.sequence + 2, completionSequence: entry.completionSequence + 2 })),
+    ],
+    timeline.map((entry) => entry.sequence === 5 ? { ...entry, completionSequence: undefined } : entry),
+    ...["rm src/other.js", "python mutate.py", "node mutate.js", "echo $(node mutate.js)"].map((command) => [
+      ...timeline,
+      { sequence: 9, completionSequence: 10, toolName: "bash", args: { command }, resultText: "" },
+    ]),
+  ]) {
+    assert.equal(inferObservedWorkflow(invalid, "Evidence: tdd-attested", "multiply").observedLabel, null);
+  }
 });
 
-test("infers TDD only from advisory red metadata plus ordered mutation and green", () => {
-  const base = [
-    { sequence: 1, toolName: "edit", args: { path: "test/math.test.js" }, resultText: "ok" },
-    { sequence: 2, toolName: "test_run", resultText: "missing multiply", resultMetadata: { phase: "red", exitCode: 1, valid: true } },
-    { sequence: 3, toolName: "edit", args: { path: "src/math.js" }, resultText: "ok" },
-    { sequence: 4, toolName: "bash", args: { command: "npm test" }, resultText: "pass" },
+test("recognizes common language-native test paths", () => {
+  for (const [path, command] of [["math_test.go", "go test ./..."], ["test_math.py", "pytest"]]) {
+    const timeline = [
+      { sequence: 1, completionSequence: 2, toolName: "edit", args: { path }, resultText: "ok" },
+      { sequence: 3, completionSequence: 4, toolName: "bash", args: { command }, resultText: "multiply missing\nCommand exited with code 1" },
+      { sequence: 5, completionSequence: 6, toolName: "edit", args: { path: "math.go" }, resultText: "ok" },
+      { sequence: 7, completionSequence: 8, toolName: "bash", args: { command }, resultText: "pass" },
+    ];
+    assert.equal(inferObservedWorkflow(timeline, "Evidence: tdd-attested", "multiply").observedLabel, "tdd-attested");
+  }
+});
+
+test("validates preservation, regression, validation, and limited claims from built-ins", () => {
+  assert.equal(inferObservedWorkflow([
+    { sequence: 1, completionSequence: 2, toolName: "bash", args: { command: "npm test" }, resultText: "pass" },
+    { sequence: 3, completionSequence: 4, toolName: "edit", args: { path: "src/math.js" }, resultText: "ok" },
+    { sequence: 5, completionSequence: 6, toolName: "bash", args: { command: "npm test" }, resultText: "pass" },
+  ], "Evidence: preservation-verified").observedLabel, "preservation-verified");
+
+  const regression = [
+    { sequence: 1, completionSequence: 2, toolName: "edit", args: { path: "test/math.test.js" }, resultText: "ok" },
+    { sequence: 3, completionSequence: 4, toolName: "bash", args: { command: "npm test" }, resultText: "pass" },
   ];
-  assert.equal(inferObservedLabel(base, "tdd"), "tdd-attested");
-  assert.equal(inferObservedLabel(base.map((entry) => entry.sequence === 2 ? { ...entry, resultMetadata: { phase: "red", exitCode: 1, valid: false } } : entry), "tdd"), null);
-  assert.equal(inferObservedLabel(base.map((entry) => entry.sequence === 2 ? { ...entry, toolName: "bash", args: { command: "npm test" }, resultText: "setup error\nCommand exited with code 1" } : entry), "tdd"), null);
-  assert.equal(inferObservedLabel([...base, { sequence: 5, toolName: "edit", args: { path: "src/math.js" }, resultText: "ok" }], "tdd"), null);
-  const stale = [
-    ...base,
-    { sequence: 5, toolName: "test_status", resultText: "truncated", resultMetadata: { supportedLabel: "tdd-attested" } },
-    { sequence: 6, toolName: "bash", args: { command: "node mutate.js" }, resultText: "ok" },
-  ];
-  assert.equal(extractObservedLabel(stale) ?? inferObservedLabel(stale, "tdd"), null);
+  assert.equal(inferObservedWorkflow(regression, "Evidence: regression-verified").observedLabel, "regression-verified");
+  for (const invalid of [
+    regression.map((entry) => entry.sequence === 3 ? { ...entry, args: { command: "npm test || true" } } : entry),
+    regression.map((entry) => entry.sequence === 3 ? { ...entry, args: { command: "echo npm test" } } : entry),
+    [{ sequence: 1, completionSequence: 2, toolName: "edit", args: { path: "src/math.js" }, resultText: "ok" }, ...regression.map((entry) => ({ ...entry, sequence: entry.sequence + 2, completionSequence: entry.completionSequence + 2 }))],
+  ]) {
+    assert.equal(inferObservedWorkflow(invalid, "Evidence: regression-verified").observedLabel, null);
+  }
+
+  const validationMutation = { sequence: 1, completionSequence: 2, toolName: "edit", args: { path: "src/config.js" }, resultText: "ok" };
+  assert.equal(inferObservedWorkflow([
+    validationMutation,
+    { sequence: 3, completionSequence: 4, toolName: "bash", args: { command: "git diff --check" }, resultText: "" },
+  ], "Evidence: validation-only").observedLabel, "validation-only");
+  assert.equal(inferObservedWorkflow([
+    validationMutation,
+    { sequence: 3, completionSequence: 4, toolName: "read", args: { path: "src/config.js" }, resultText: "updated" },
+  ], "Evidence: validation-only").observedLabel, "validation-only");
+  for (const irrelevant of [
+    { sequence: 3, completionSequence: 4, toolName: "read", args: { path: "README.md" }, resultText: "docs" },
+    { sequence: 3, completionSequence: 4, toolName: "bash", args: { command: "pwd" }, resultText: "/repo" },
+  ]) {
+    assert.equal(inferObservedWorkflow([validationMutation, irrelevant], "Evidence: validation-only").observedLabel, null);
+  }
+
+  assert.equal(inferObservedWorkflow([], "Automation unavailable. Evidence: verification-limited").observedLabel, null);
+  assert.deepEqual(inferObservedWorkflow([
+    validationMutation,
+    { sequence: 3, completionSequence: 4, toolName: "read", args: { path: "src/config.js" }, resultText: "updated" },
+  ], "Automation unavailable. Residual risk remains. Evidence: verification-limited"), {
+    claimedLabel: "verification-limited",
+    observedMode: "verification-limited",
+    observedLabel: "verification-limited",
+  });
+  for (const text of ["Looks good", "Possible labels: tdd-attested or validation-only."]) {
+    assert.deepEqual(inferObservedWorkflow([], text), {
+      claimedLabel: null,
+      observedMode: null,
+      observedLabel: null,
+    });
+  }
 });
 
 test("aggregation keeps failures and unsupported outcomes visible", () => {

@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": false,
   "type": "module",
-  "description": "Risk-based TDD skill and advisory testing tools for Pi",
+  "description": "Risk-based test-driven development skill for Pi",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/stijnVanHorenbeek/pi-test-driven-development.git"
@@ -18,9 +18,10 @@
   "keywords": [
     "pi-package",
     "pi-skill",
-    "pi-extension",
     "test-driven-development",
-    "testing"
+    "testing",
+    "tdd",
+    "tests"
   ],
   "license": "MIT",
   "engines": {
@@ -35,28 +36,17 @@
   },
   "files": [
     "docs",
-    "extensions",
     "skills",
     "README.md",
     "LICENSE"
   ],
-  "peerDependencies": {
-    "@earendil-works/pi-ai": "*",
-    "@earendil-works/pi-coding-agent": "*",
-    "typebox": "*"
-  },
   "devDependencies": {
-    "@earendil-works/pi-ai": "^0.84.1",
     "@earendil-works/pi-coding-agent": "^0.84.1",
     "@types/node": "^26.2.0",
     "tsx": "^4.23.12",
-    "typebox": "^1.3.12",
     "typescript": "^7.0.2"
   },
   "pi": {
-    "extensions": [
-      "./extensions/test-advisor.ts"
-    ],
     "skills": [
       "./skills"
     ]

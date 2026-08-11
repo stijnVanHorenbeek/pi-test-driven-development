@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "matrix_id": "v1",
-  "version": 3,
+  "version": 8,
   "description": "Preregistered Pi SDK routing and workflow matrix for risk-based test policy.",
   "amendments": [
     {
@@ -15,13 +15,33 @@
     {
       "version": 3,
       "reason": "Clarify that original preregistration chronology is author-attested because repository had no immutable commit history. Evaluation cases, prompts, expected outcomes, models, repetitions, and thresholds are unchanged."
+    },
+    {
+      "version": 4,
+      "reason": "Replace model-facing advisory tools with a skill-only runtime. Workflow evidence now comes from built-in tool chronology plus the final claimed evidence label. Cases, prompts, expected outcomes, models, repetitions, and thresholds are unchanged."
+    },
+    {
+      "version": 5,
+      "reason": "Harden built-in evidence inference with tool completion order, opaque-mutation rejection, anchored command recognition, and preregistered feature-specific red-output patterns. Task prompts, modes, labels, models, repetitions, and thresholds are unchanged."
+    },
+    {
+      "version": 6,
+      "reason": "Raise openai-codex/gpt-5.4-mini thinking from low to medium after a version-4 diagnostic loaded the skill but implemented production before its test. The failed diagnostic remains in local results and is not reused. Other model settings and all cases, prompts, expected outcomes, repetitions, and thresholds are unchanged."
+    },
+    {
+      "version": 7,
+      "reason": "Reject pre-red production, incomplete tool events, and detected opaque script mutations; add shipped-package provenance hashing after independent review. Cases, prompts, modes, labels, models, repetitions, and thresholds are unchanged."
+    },
+    {
+      "version": 8,
+      "reason": "Reject embedded command substitution in recognized test commands and exclude passing-test lines from feature-specific red matching after final review. Cases, prompts, modes, labels, models, repetitions, and thresholds are unchanged."
     }
   ],
   "models": [
     {
       "provider": "openai-codex",
       "model": "gpt-5.4-mini",
-      "thinking": "low"
+      "thinking": "medium"
     },
     {
       "provider": "openai-codex",

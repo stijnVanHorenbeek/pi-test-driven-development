@@ -78,20 +78,21 @@ Completion record should name exact focused command, expected/observed red reaso
 green or validation result, broader commands and rationale, pre-existing failures, and residual risk.
 Final diff alone cannot prove historical TDD sequence.
 
-## Advisory tools
+## Built-in tool workflow
 
-Package extension keeps these tools inactive until this skill loads:
+Use Pi's built-in tools directly:
 
-- `test_context`: inspect polyglot repository runners, wrappers, test roots, workspaces, and dirty state.
-- `test_policy`: map explicit task facts to mode and evidence requirements.
-- `test_run`: execute exact chosen command in `baseline`, `red`, `green`, `regression`, `broader`,
-  or `validation` phase and retain bounded evidence.
-- `test_status`: report strongest label supported by observed ledger and missing proof.
+- Inspect repository status, docs, manifests, scripts, CI config, and existing tests with `read` and
+  read-only `bash` commands before choosing scope or runner.
+- State expected red reason before execution, then run exact focused and broader commands with `bash`.
+  Keep evidence commands separate; never mask status with `|| true` or unrelated shell composition.
+- Make visible source changes with `edit` or `write`; preserve unrelated dirty paths.
+- Judge failures semantically. Exit status and matching text cannot promote setup, syntax, flaky, or
+  unrelated failures into valid red evidence.
 
-Use `test_context` when setup/scope is unclear and `test_policy` for mixed boundaries. For TDD or
-preservation, use `test_run` for phase commands unless runner needs unsupported interaction. Use
-`test_status` before completion; if skipped, do not claim evidence label. Tools remain advisory:
-supplied facts can be wrong, failure cause needs judgment, and opaque shell mutation forces downgrade.
+At completion, report observed commands and results, pre-existing failures, residual risk, then end with
+`Evidence: <label>` using strongest supported label. Built-in output is evidence; final diff or confident
+prose is not.
 
 ## Load references narrowly
 

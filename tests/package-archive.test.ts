@@ -12,8 +12,8 @@ test("npm archive contains runtime package but excludes eval and test sources", 
   const payload = Array.isArray(parsed) ? parsed[0] : Object.values(parsed)[0];
   assert.ok(payload && typeof payload === "object");
   const paths = new Set((payload as { files: Array<{ path: string }> }).files.map((item) => item.path));
-  assert.ok(paths.has("extensions/test-advisor.ts"));
   assert.ok(paths.has("skills/test-driven-development/SKILL.md"));
+  assert.equal([...paths].some((path) => path.startsWith("extensions/")), false);
   assert.ok(paths.has("docs/v1-acceptance-contract.md"));
   assert.equal([...paths].some((path) => path.startsWith("tests/")), false);
   assert.equal([...paths].some((path) => path.startsWith("evals/")), false);

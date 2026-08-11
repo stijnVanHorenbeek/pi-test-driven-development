@@ -1,6 +1,6 @@
 # Repository-native runner selection
 
-Load only when focused command is unclear. Prefer `test_context` output and repository documentation over this reminder.
+Load only when focused command is unclear. Prefer repository documentation, manifests, scripts, and CI configuration inspected with built-in `read` or read-only `bash` over this reminder.
 
 ## Priority
 
@@ -33,6 +33,4 @@ Start narrow, then broaden by risk:
 | Swift | `swift test --filter Name` |
 | Dart/Flutter | `dart test path`; `flutter test path` |
 
-Examples are not authority. Flags differ by version and repository. `test_context` recognizes more ecosystems and reports source paths/confidence.
-
-`test_run` executes exact selected command and records phase evidence. It never installs missing tools.
+Examples are not authority. Flags differ by version and repository. Run exact selected commands with built-in `bash`, inspect output directly, and never install missing tools merely to satisfy process.

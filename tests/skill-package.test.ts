@@ -20,10 +20,9 @@ function foldedDescription(metadata: string) {
   return match[1].split("\n").map((line) => line.trim()).filter(Boolean).join(" ");
 }
 
-test("package manifest exposes one extension and only intended skill tree", async () => {
+test("package manifest exposes only intended skill tree", async () => {
   const manifest = JSON.parse(await readFile(join(root, "package.json"), "utf8"));
   assert.deepEqual(manifest.pi, {
-    extensions: ["./extensions/test-advisor.ts"],
     skills: ["./skills"],
   });
   assert.equal(manifest.private, false);
@@ -76,10 +75,10 @@ test("critical safety and evidence concepts are explicit without source-text rit
   for (const label of ["tdd-attested", "regression-verified", "preservation-verified", "validation-only", "verification-limited"]) {
     assert.ok(text.includes(label), label);
   }
-  assert.match(text, /test_context/);
-  assert.match(text, /test_policy/);
-  assert.match(text, /test_run/);
-  assert.match(text, /test_status/);
+  assert.match(text, /built-in/i);
+  assert.match(text, /`read`/);
+  assert.match(text, /`bash`/);
+  assert.doesNotMatch(text, /test_(?:context|policy|run|status)/);
 });
 
 test("package has exactly one discovered skill and no prompt/theme resources", async () => {

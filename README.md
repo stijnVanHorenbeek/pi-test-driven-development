@@ -1,23 +1,22 @@
 # pi-test-driven-development
 
-Risk-based test policy for [Pi](https://pi.dev): skill plus dynamically activated advisory tools. Package uses TDD for valuable observable-behavior checks, preserves existing/user work, supports pure-refactor baselines, and avoids permanent tests that only prove an edit occurred.
+This skill-only package defines a risk-based testing policy for [Pi](https://pi.dev). The skill applies TDD to valuable checks of observable behavior, preserves existing and user work, supports pure-refactor baselines, and avoids permanent tests that only prove an edit occurred.
 
-> [!WARNING]
-> Package extension can run repository commands through `test_run`, with same system access and risk as Pi's bash tool. Review source before installation. Tools are advisory and cannot prove semantic test quality, expected failure meaning, or complete filesystem chronology.
+The package registers no custom tools or extension hooks. The agent uses Pi's built-in repository tools directly.
 
-Version 0.1.0 is release-candidate software. Full V1 matrix qualification is required before npm `latest` publication.
+Version 0.1.0 is a release candidate. Full V1 matrix qualification is required before publication to npm `latest`.
 
 ## Policy
 
-Tests follow observable contract and plausible regression risk—not changed lines, file types, function counts, or coverage quotas.
+Tests target observable contracts and plausible regression risks, not changed lines, file types, function counts, or coverage quotas.
 
-Before adding permanent test:
+Before adding a permanent test:
 
-1. Identify user/operator/developer contract.
-2. Name plausible regression test catches.
-3. Confirm assertion is stable and discriminating.
-4. Check whether existing coverage already proves contract.
-5. Compare durable confidence with write/run/maintenance cost.
+1. Identify the user, operator, or developer contract.
+2. Name the plausible regression that the test would catch.
+3. Confirm that the assertion is stable and discriminating.
+4. Check whether existing coverage already proves the contract.
+5. Compare durable confidence with writing, running, and maintenance costs.
 
 | Situation | Mode | Evidence label |
 |---|---|---|
@@ -32,73 +31,33 @@ Never revert, delete, overwrite, hide, or set aside pre-existing/user work solel
 ## What package provides
 
 - One progressively loaded `test-driven-development` skill.
-- One TypeScript extension entrypoint.
-- Four tools activated only after package skill loads:
-  - `test_context`
-  - `test_policy`
-  - `test_run`
-  - `test_status`
-- TypeScript package/evaluation tests.
-- Author-attested preregistered Pi SDK routing/workflow matrix.
+- References for workflows, runners, failures, test design, and UI/content.
+- TypeScript tests for package and evaluation code.
+- An author-attested, preregistered Pi SDK routing and workflow matrix.
 
-No prompt template, theme, output style, global instruction, blocking edit hook, auto-revert behavior, or coverage quota.
+The package provides no extension, custom tool, prompt template, theme, global instruction, blocking hook, auto-revert behavior, or coverage quota.
 
-## Advisory tools
+## Built-in tools
 
-### `test_context`
+The skill guides the agent to use Pi's existing tools:
 
-Read-only bounded repository scan. Reports:
+- `read` and read-only `bash` inspect repository status, docs, manifests, scripts, CI configuration, and existing tests.
+- `bash` runs exact focused, baseline, regression, build, lint, typecheck, and broader commands.
+- `edit` and `write` make visible source changes while preserving unrelated dirty paths.
 
-- Git dirty paths and workspace roots.
-- Existing manifests, lockfiles, test configs, and test roots.
-- Sourced test/build/lint/typecheck/check command candidates.
-- Unknown, missing, polyglot, or ambiguous setup.
-
-Initial recognizers cover JavaScript/TypeScript, Python, Go, Rust, Ruby, Gradle, Maven, .NET, Elixir, PHP, Swift, Dart/Flutter, Bazel, CMake/CTest, Make, Just, and Task. Repository evidence wins. Tool never installs framework or dependency.
-
-### `test_policy`
-
-Maps explicit task facts to recommended mode, evidence label, permanent-test decision, next proof, and residual risk. Deterministic result is only as sound as supplied facts; tool cannot decide product value from schema fields alone.
-
-### `test_run`
-
-Runs exact selected repository command under phase:
-
-- `baseline`
-- `red`
-- `green`
-- `regression`
-- `broader`
-- `validation`
-
-Records exit status, duration, bounded output, and predeclared red reason. Exact stable-literal matching identifies a red candidate; agent must still inspect semantic cause. Passing red or unrelated/setup failure is invalid. Tool does not choose commands or install runners.
-
-### `test_status`
-
-Reports strongest label supported by observed ledger. `tdd-attested` requires a visible test mutation, valid red, later production mutation, final focused green, and no opaque mutation evidence.
-
-Ledger persists in tool-result details for session branching. Package writes no global/project bookkeeping file.
-
-## Dynamic activation
-
-Extension defers advisory tool registration and activation until:
-
-- Successful exact read of package `skills/test-driven-development/SKILL.md`; or
-- `/skill:test-driven-development` resolving to package skill provenance.
-
-Activation registers tools once and adds them without disabling ambient built-in or third-party tools. Unrelated tasks receive no advisory tool schemas.
+The agent evaluates failures directly and reports observed commands, results, residual risk, and a final `Evidence: <label>`. The package adds no model-facing schemas or bookkeeping calls.
 
 ## Use
 
 ### Automatic activation
 
-When skill discovery is enabled, Pi includes skill name and description in system prompt. Model should load skill when main task asks to implement/change observable production behavior, fix reproducible bug, or refactor production source.
+When skill discovery is enabled, Pi includes the skill name and description in the system prompt. The model should load the skill when the main task asks it to implement or change observable production behavior, fix a reproducible bug, or refactor production source.
 
-Default exclusions include review/explanation only, test-result interpretation, code already written, test-only work, docs/comments only, generated/vendor output, and ordinary copy/style/format-only edits.
+By default, the skill excludes review or explanation only, test-result interpretation, code already written, test-only work, docs or comments only, generated or vendor output, and ordinary copy, style, or formatting edits.
 
-Contractual copy—accessibility names, legal/safety wording, localization, CLI/API/parser/error output—can still qualify when stable observable risk changes.
+Contractual copy—accessibility names, legal or safety wording, localization, and CLI, API, parser, or error output—can still qualify when stable observable risk changes.
 
-Automatic activation is model-dependent. Use explicit command when routing must be deterministic.
+Automatic activation is model-dependent. Use the explicit command when routing must be deterministic.
 
 ### Explicit activation
 
@@ -106,31 +65,31 @@ Automatic activation is model-dependent. Use explicit command when routing must 
 /skill:test-driven-development Implement retry backoff. Choose proportionate mode, preserve existing work, and report observed evidence.
 ```
 
-Explicit invocation can evaluate normally excluded cases. It cannot authorize unsafe operations or false evidence.
+Explicit invocation can evaluate cases that are normally excluded. It cannot authorize unsafe operations or false evidence.
 
 ## Install
 
-Pi packages execute trusted TypeScript with full user permissions. Review package first.
+Review the package contents before installation. The package ships Markdown skill resources and no executable extension.
 
-From npm after release:
+After release, install from npm:
 
 ```bash
 pi install npm:pi-test-driven-development@0.1.0
 ```
 
-From pinned GitHub release after tag publication:
+After tag publication, install from the pinned GitHub release:
 
 ```bash
 pi install git:github.com/stijnVanHorenbeek/pi-test-driven-development@v0.1.0
 ```
 
-Global local-path development install:
+For local development, install globally from an absolute path:
 
 ```bash
 pi install /absolute/path/to/test-driven-development
 ```
 
-Add `-l` for project-local settings. Temporary run without settings change:
+Add `-l` for project-local settings. To run temporarily without changing settings:
 
 ```bash
 pi -e /absolute/path/to/test-driven-development
@@ -144,7 +103,7 @@ pi list
 
 ## Disable and remove
 
-Disable discovered skills for one run:
+To disable discovered skills for one run:
 
 ```bash
 pi --no-skills
@@ -152,35 +111,33 @@ pi --no-skills
 
 Explicit `--skill` paths still load with `--no-skills`.
 
-Use Pi resource configuration:
+Open Pi resource configuration:
 
 ```bash
 pi config
 pi config -l
 ```
 
-Package filters can disable extension while retaining skill:
+Package filters can disable the skill resource:
 
 ```json
 {
   "packages": [
     {
       "source": "/absolute/path/to/test-driven-development",
-      "extensions": []
+      "skills": []
     }
   ]
 }
 ```
 
-Without extension, skill still works but advisory tools do not appear. Disable skill independently with `skills: []` when only extension discovery testing is needed.
-
-Remove global local-path install:
+Remove a global local-path installation:
 
 ```bash
 pi remove /absolute/path/to/test-driven-development
 ```
 
-Remove project-local install:
+Remove a project-local installation:
 
 ```bash
 pi remove /absolute/path/to/test-driven-development -l
@@ -188,9 +145,9 @@ pi remove /absolute/path/to/test-driven-development -l
 
 ## Development
 
-Requires Node.js `>=22.19.0`, npm, and Git.
+Development requires Node.js `>=22.19.0`, npm, and Git.
 
-Pi loads shipped extension TypeScript through documented jiti runtime. Development does not rely on Node native TypeScript stripping; `tsx` runs tests/evals and `tsc` performs static checking.
+`tsx` runs tests and evaluations. `tsc` performs static checks on evaluation and test code.
 
 ```bash
 npm install --ignore-scripts
@@ -200,49 +157,45 @@ npm run check
 npm pack --dry-run --json
 ```
 
-Runtime Pi packages are peer dependencies and are not bundled.
-
 ## Evaluations
 
-Author attests evaluation inputs were written before skill/extension prompt implementation. Repository had no commits, so original chronology is not independently verifiable. Harness hashes current inputs and code for every run; future preregistration should use immutable commit history.
+The author attests that evaluation inputs were written before the initial skill implementation. The repository had no commits, so the original chronology is not independently verifiable. Matrix amendments 4–8 record the migration to a skill-only runtime, hardened built-in tool evidence, transparent Codex thinking-level tuning, and independent-review fixes. The harness hashes current inputs and code for every run. Future preregistration should use immutable commit history.
 
 - `evals/v1-matrix.json`
 - `evals/cases.json`
 - `evals/fixtures/templates.json`
 
-Matrix includes two model configurations, three repetitions, 35 natural fixture-repo tasks, automatic positive/negative routing, explicit invocation, workflow safety, anti-patterns, and held-out cases.
+The matrix includes two model configurations, three repetitions, 35 natural fixture-repository tasks, automatic positive and negative routing, explicit invocation, workflow safety, anti-patterns, and held-out cases.
 
-Report preregistration/current results without model calls:
+Report preregistration and current results without model calls:
 
 ```bash
 npm run eval:report
 ```
 
-Run matrix after reviewing provider cost:
+Review provider cost before running the matrix:
 
 ```bash
 npm run eval -- --track tuning
 npm run eval -- --track held-out
 ```
 
-Evaluation harness uses Pi SDK sessions, in-memory settings/sessions, package-only resources, isolated auth/model paths, and event-derived exact skill reads. Separate CLI/RPC smoke checks real package discovery and command provenance.
+The evaluation harness uses Pi SDK sessions, in-memory settings and sessions, package-only skill resources, isolated auth and model paths, event-derived exact skill reads, and built-in tool chronology. Separate CLI/RPC smoke tests check real package discovery and command provenance.
 
 ### Evidence status
 
-No full V1 matrix result is committed; package makes no release-quality routing or workflow-reliability claim. Development smoke subsets are diagnostic only.
+No full V1 matrix result is committed, so the package makes no release-quality claim about routing or workflow reliability. Development smoke subsets are diagnostic only.
 
-Static/package tests and live matrix results must be reported separately. Structural tests cannot prove probabilistic skill routing. Full claim requires all preregistered cells; failed, timed-out, stale, missing, or unsupported cells remain visible.
+Static and package tests must be reported separately from live matrix results. Structural tests cannot prove probabilistic skill routing. A full claim requires all preregistered cells. Failed, timed-out, stale, missing, or unsupported cells remain visible.
 
-Held-out cases are preregistered but not secret. They test against iterative prompt fitting; they do not establish population generalization.
+Held-out cases are preregistered but not secret. They test resistance to iterative prompt fitting but do not establish population generalization.
 
-Tool events cannot reconstruct every shell mutation. Evaluation marks unsupported ordering rather than inferring it. Model outputs and tool labels do not prove semantic correctness for arbitrary repositories.
+Built-in tool events cannot reconstruct every shell mutation. The evaluation marks ordering as unsupported instead of inferring it. Model evidence labels do not prove semantic correctness for arbitrary repositories.
 
 ## Package layout
 
 ```text
 docs/                                      Acceptance contract and provenance
-extensions/test-advisor.ts                 Dynamic Pi extension entrypoint
-extensions/lib/                            Polyglot context, policy, command, evidence logic
 skills/test-driven-development/SKILL.md    Lean Pi router
 skills/test-driven-development/references/ Progressive workflow guidance
 evals/                                     Preregistered TypeScript SDK evaluation
@@ -251,17 +204,17 @@ tests/                                     Deterministic TypeScript tests
 
 ## Provenance
 
-Package is derivative adaptation of [`obra/superpowers`](https://github.com/obra/superpowers) at commit [`44c9b2d6e889982ac18c27d05a19fefe335194e1`](https://github.com/obra/superpowers/commit/44c9b2d6e889982ac18c27d05a19fefe335194e1), especially:
+The package is a derivative adaptation of [`obra/superpowers`](https://github.com/obra/superpowers), especially:
 
 - `skills/test-driven-development/SKILL.md`
 - `skills/test-driven-development/writing-good-tests.md`
 - `LICENSE`
 
-Upstream is MIT licensed, copyright (c) 2025 Jesse Vincent. This adaptation retains valid-red and behavior-test guidance while rejecting universal test-per-change mandates and delete/restart handling of existing work.
+Upstream is MIT licensed, copyright (c) 2025 Jesse Vincent. This adaptation retains valid-red and behavior-test guidance. It rejects universal test-per-change mandates and delete/restart handling of existing work.
 
-Current installed local skill had no recorded Git provenance but shows strong upstream lineage. See [`docs/v1-acceptance-contract.md`](docs/v1-acceptance-contract.md) for bounded inventory, rejected material, research basis, and acceptance gates.
+The local skill currently installed had no recorded Git provenance but shows strong upstream lineage. See [`docs/v1-acceptance-contract.md`](docs/v1-acceptance-contract.md) for the bounded inventory, rejected material, research basis, and acceptance gates.
 
-No affiliation or endorsement by upstream project or cited testing authors.
+This package is not affiliated with or endorsed by the upstream project or cited testing authors.
 
 ## License
 

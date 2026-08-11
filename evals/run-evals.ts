@@ -77,6 +77,17 @@ async function treeHash(path: string): Promise<string> {
   return hash.digest("hex");
 }
 
+async function runtimePackageHash() {
+  const hash = createHash("sha256");
+  for (const file of ["package.json", "README.md", "LICENSE"]) {
+    hash.update(file).update("\0").update(await readFile(join(root, file))).update("\0");
+  }
+  for (const directory of ["docs", "skills"]) {
+    hash.update(directory).update("\0").update(await treeHash(join(root, directory))).update("\0");
+  }
+  return hash.digest("hex");
+}
+
 async function provenance() {
   let commit: string | null = null;
   let dirty = true;
@@ -96,7 +107,7 @@ async function provenance() {
     casesSha256: await sha256File(join(root, "evals", "cases.json")),
     templatesSha256: await sha256File(join(root, "evals", "fixtures", "templates.json")),
     skillTreeSha256: await treeHash(join(root, "skills", "test-driven-development")),
-    extensionTreeSha256: await treeHash(join(root, "extensions")),
+    packageTreeSha256: await runtimePackageHash(),
     evalRunnerSha256: runnerHash,
     packageCommit: commit,
     packageDirty: dirty,

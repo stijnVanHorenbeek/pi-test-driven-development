@@ -24,8 +24,6 @@ const exec = promisify(execFile);
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const skillPath = join(packageRoot, "skills", "test-driven-development", "SKILL.md");
 const skillRoot = dirname(skillPath);
-const extensionPath = join(packageRoot, "extensions", "test-advisor.ts");
-
 async function exists(path: string) {
   try { await stat(path); return true; } catch { return false; }
 }
@@ -39,70 +37,28 @@ export async function createIsolatedAgentDir(sourceAgentDir: string) {
   return { path, cleanup: () => rm(path, { recursive: true, force: true }) };
 }
 
-interface AdvisoryTimelineEntry {
+interface TimelineEntry {
+  sequence: number;
+  completionSequence?: number;
   toolName: string;
   args?: any;
+  isError?: boolean;
   resultText: string;
-  resultMetadata?: Record<string, unknown>;
-}
-
-function parsedAdvisoryResults(timeline: AdvisoryTimelineEntry[]) {
-  return [...timeline].reverse().flatMap((entry) => {
-    if (entry.toolName !== "test_policy" && entry.toolName !== "test_status") return [];
-    if (entry.resultMetadata) return [{ toolName: entry.toolName, value: entry.resultMetadata }];
-    try { return [{ toolName: entry.toolName, value: JSON.parse(entry.resultText) as Record<string, unknown> }]; }
-    catch { return []; }
-  });
-}
-
-export function extractObservedMode(timeline: AdvisoryTimelineEntry[]): ExpectedMode | null {
-  const labelModes: Record<string, ExpectedMode> = {
-    "tdd-attested": "tdd",
-    "regression-verified": "regression-verification",
-    "preservation-verified": "preservation",
-    "validation-only": "validation-only",
-    "verification-limited": "verification-limited",
-  };
-  for (const { value } of parsedAdvisoryResults(timeline)) {
-    const candidate = value.mode ?? value.decision;
-    if (["tdd", "regression-verification", "preservation", "validation-only", "verification-limited"].includes(String(candidate))) {
-      return candidate as ExpectedMode;
-    }
-    const fromLabel = labelModes[String(value.supportedLabel)];
-    if (fromLabel) return fromLabel;
-  }
-  return null;
 }
 
 type ObservedLabel = "tdd-attested" | "regression-verified" | "preservation-verified" | "validation-only" | "verification-limited";
 
-function clearlyReadOnlyBash(entry: AdvisoryTimelineEntry) {
-  if (entry.toolName !== "bash" || typeof entry.args?.command !== "string") return false;
-  const segments = entry.args.command.split(/&&|\|\||;/).map((segment: string) => segment.trim()).filter(Boolean);
-  return segments.length > 0 && segments.every((segment: string) => /^git\s+(?:diff|status|show|log|rev-parse)\b/.test(segment));
-}
+const labelModes: Record<ObservedLabel, ExpectedMode> = {
+  "tdd-attested": "tdd",
+  "regression-verified": "regression-verification",
+  "preservation-verified": "preservation",
+  "validation-only": "validation-only",
+  "verification-limited": "verification-limited",
+};
 
-export function extractObservedLabel(timeline: AdvisoryTimelineEntry[]): ObservedLabel | null {
-  for (let index = timeline.length - 1; index >= 0; index -= 1) {
-    const entry = timeline[index]!;
-    if (entry.toolName !== "test_status") continue;
-    const parsed = parsedAdvisoryResults([entry]).at(0)?.value;
-    const candidate = parsed?.supportedLabel;
-    if (!["tdd-attested", "regression-verified", "preservation-verified", "validation-only", "verification-limited"].includes(String(candidate))) continue;
-    if (candidate === "verification-limited") return candidate;
-    const stale = timeline.slice(index + 1).some((later) =>
-      ["edit", "write", "test_run", "test_policy"].includes(later.toolName)
-      || (later.toolName === "bash" && !clearlyReadOnlyBash(later)),
-    );
-    return stale ? null : candidate as ObservedLabel;
-  }
-  return null;
-}
-
-interface OrderedTimelineEntry extends AdvisoryTimelineEntry {
-  sequence: number;
-  args?: any;
-  resultMetadata?: Record<string, unknown>;
+function claimedLabel(finalText: string): ObservedLabel | null {
+  const matches = [...finalText.matchAll(/\bEvidence(?: label)?\s*:\s*`?(tdd-attested|regression-verified|preservation-verified|validation-only|verification-limited)\b/gi)];
+  return (matches.at(-1)?.[1]?.toLowerCase() as ObservedLabel | undefined) ?? null;
 }
 
 function testPath(path: unknown) {
@@ -110,55 +66,141 @@ function testPath(path: unknown) {
   const value = path.replaceAll("\\", "/").toLowerCase();
   return /(^|\/)(test|tests|spec|specs|__tests__)(\/|$)/.test(value)
     || /\.(test|spec)\.[a-z0-9]+$/.test(value)
+    || /(^|\/)(?:test_[^/]+|[^/]+_(?:test|spec))\.[a-z0-9]+$/.test(value)
     || value.endsWith(".snap");
 }
 
-function testCommand(entry: OrderedTimelineEntry) {
-  if (entry.toolName === "test_run") {
-    const exitCode = entry.resultMetadata?.exitCode;
-    return typeof exitCode === "number" ? {
-      sequence: entry.sequence,
-      exitCode,
-      phase: String(entry.resultMetadata?.phase ?? ""),
-      valid: entry.resultMetadata?.valid === true,
-      advisory: true,
-    } : undefined;
-  }
-  if (entry.toolName !== "bash" || typeof entry.args?.command !== "string") return undefined;
-  if (!/(?:^|\s)(?:npm\s+(?:run\s+)?test|pnpm\s+(?:run\s+)?test|yarn\s+test|bun\s+test|node\s+--test|pytest|go\s+test|cargo\s+test|rspec|vitest|jest|gradlew?.*\btest|mvn.*\btest|dotnet\s+test|mix\s+test|phpunit|swift\s+test|dart\s+test|flutter\s+test|ctest)\b/i.test(entry.args.command)) return undefined;
-  const failure = entry.resultText.match(/Command exited with code (\d+)/);
-  return { sequence: entry.sequence, exitCode: failure ? Number(failure[1]) : 0, phase: "", valid: !failure, advisory: false };
+function commandExitCode(entry: TimelineEntry) {
+  if (entry.completionSequence === undefined) return null;
+  const failure = entry.resultText.match(/Command exited with code (\d+)/i);
+  if (failure) return Number(failure[1]);
+  return entry.isError ? null : 0;
 }
 
-export function inferObservedLabel(timeline: OrderedTimelineEntry[], mode: ExpectedMode | null): ObservedLabel | null {
-  if (timeline.some((entry) => entry.toolName === "test_status")) return extractObservedLabel(timeline);
-  if (mode === "verification-limited") return "verification-limited";
+function hasShellComposition(command: string) {
+  const unquoted = command.replace(/'(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*"/g, "");
+  return /&&|\|\||[;|]/.test(unquoted);
+}
+
+function testCommand(entry: TimelineEntry) {
+  if (entry.toolName !== "bash" || typeof entry.args?.command !== "string" || hasShellComposition(entry.args.command)) return undefined;
+  if (!/^\s*(?:npm\s+(?:run\s+)?test|pnpm\s+(?:run\s+)?test|yarn\s+test|bun\s+test|node\s+--test|pytest|go\s+test|cargo\s+test|rspec|vitest|jest|\.\/gradlew.*\btest|gradle\s+test|mvn.*\btest|\.\/mvnw.*\btest|dotnet\s+test|mix\s+test|phpunit|swift\s+test|dart\s+test|flutter\s+test|ctest)\b/i.test(entry.args.command)) return undefined;
+  return {
+    sequence: entry.sequence,
+    completionSequence: entry.completionSequence ?? entry.sequence,
+    exitCode: commandExitCode(entry),
+    output: entry.resultText,
+  };
+}
+
+function setupFailure(output: string) {
+  return /\b(?:cannot find (?:module|package)|module not found|err_module_not_found|command not found|no such file|cannot resolve|failed to load)\b/i.test(output)
+    || (/SyntaxError:/i.test(output) && !/does not provide an export named/i.test(output));
+}
+
+function hasOpaqueShellSyntax(command: string) {
+  return /\$\(|`/.test(command)
+    || /(?:^|[\s;&|])(?:\d*)>>?\s*(?!\/dev\/null\b|&\d+\b)/.test(command);
+}
+
+function looksLikeOpaqueMutation(command: string) {
+  return hasOpaqueShellSyntax(command)
+    || /(?:^|[;&|])\s*(?:sed\s+-i|perl\s+-pi|tee\s|mv\s|cp\s|rm\s|touch\s|truncate\s|dd\s|rsync\s|git\s+(?:commit|reset|restore|clean|apply|checkout|switch)\b)/.test(command)
+    || /^\s*(?:(?:python\d*|ruby|bash|sh|zsh|fish)\b|node\s+(?!--test\b)|\.\/\S+)/.test(command);
+}
+
+function failureDiagnostics(output: string) {
+  return output.split("\n")
+    .filter((line) => !/^\s*(?:✔|✓|ok\b|pass\b)/i.test(line))
+    .join("\n");
+}
+
+function samePath(left: unknown, right: unknown) {
+  if (typeof left !== "string" || typeof right !== "string") return false;
+  const normalize = (value: string) => value.replace(/^@/, "").replaceAll("\\", "/").replace(/^\.\//, "");
+  const a = normalize(left);
+  const b = normalize(right);
+  return a === b || a.endsWith(`/${b}`) || b.endsWith(`/${a}`);
+}
+
+function successfulVerification(entry: TimelineEntry, changedPaths: string[]) {
+  if (entry.sequence < 1 || entry.completionSequence === undefined || entry.isError) return false;
+  if (entry.toolName === "read") return changedPaths.some((path) => samePath(path, entry.args?.path));
+  if (entry.toolName !== "bash" || typeof entry.args?.command !== "string") return false;
+  const command = entry.args.command;
+  const recognized = /^\s*(?:git\s+diff\b|npm\s+(?:test|run\s+(?:test|check|build|lint|typecheck))\b|pnpm\s+(?:test|check|build|lint|typecheck)\b|yarn\s+(?:test|check|build|lint|typecheck)\b|bun\s+(?:test|run\s+(?:test|check|build|lint|typecheck))\b|tsc\b|pytest\b|go\s+test\b|cargo\s+test\b|rspec\b|vitest\b|jest\b|dotnet\s+test\b|mix\s+test\b|phpunit\b|swift\s+test\b|dart\s+test\b|flutter\s+test\b|ctest\b)/i.test(command);
+  return recognized && !hasShellComposition(command) && commandExitCode(entry) === 0 && !looksLikeOpaqueMutation(command);
+}
+
+export function inferObservedWorkflow(timeline: TimelineEntry[], finalText: string, expectedRedPattern?: string) {
+  const claim = claimedLabel(finalText);
+  const mode = claim ? labelModes[claim] : null;
+  if (!claim || !mode) return { claimedLabel: claim, observedMode: mode, observedLabel: null };
+
+  const opaqueMutation = timeline.some((entry) =>
+    entry.toolName === "bash"
+    && typeof entry.args?.command === "string"
+    && (
+      hasOpaqueShellSyntax(entry.args.command)
+      || (!testCommand(entry) && looksLikeOpaqueMutation(entry.args.command))
+    ),
+  );
+  if (opaqueMutation && claim !== "verification-limited") {
+    return { claimedLabel: claim, observedMode: mode, observedLabel: null };
+  }
+
   const mutations = timeline
-    .filter((entry) => (entry.toolName === "edit" || entry.toolName === "write") && typeof entry.args?.path === "string")
-    .map((entry) => ({ sequence: entry.sequence, test: testPath(entry.args.path) }));
+    .filter((entry) =>
+      (entry.toolName === "edit" || entry.toolName === "write")
+      && entry.completionSequence !== undefined
+      && typeof entry.args?.path === "string"
+      && !entry.isError,
+    )
+    .map((entry) => ({
+      sequence: entry.sequence,
+      completionSequence: entry.completionSequence ?? entry.sequence,
+      path: String(entry.args.path),
+      test: testPath(entry.args.path),
+    }));
   const runs = timeline.map(testCommand).filter((value): value is NonNullable<ReturnType<typeof testCommand>> => Boolean(value));
   const firstProduction = mutations.find((mutation) => !mutation.test);
   const firstTest = mutations.find((mutation) => mutation.test);
-  const latestMutation = mutations.at(-1);
+  const latestMutation = mutations.reduce<(typeof mutations)[number] | undefined>(
+    (latest, mutation) => !latest || mutation.completionSequence > latest.completionSequence ? mutation : latest,
+    undefined,
+  );
+  let observedLabel: ObservedLabel | null = null;
 
-  if (mode === "tdd" && firstTest && latestMutation) {
-    const red = runs.find((run) => run.advisory && run.phase === "red" && run.valid && run.sequence > firstTest.sequence);
-    const production = red && mutations.find((mutation) => !mutation.test && mutation.sequence > red.sequence);
-    const green = production && runs.find((run) => run.sequence > latestMutation.sequence && run.exitCode === 0);
-    return red && production && green ? "tdd-attested" : null;
+  if (claim === "tdd-attested" && firstTest && latestMutation && expectedRedPattern) {
+    let expectedRed: RegExp | undefined;
+    try { expectedRed = new RegExp(expectedRedPattern, "i"); } catch { /* invalid evaluation pattern stays unsupported */ }
+    const red = expectedRed && runs.find((run) =>
+      run.sequence > firstTest.completionSequence
+      && run.exitCode !== null
+      && run.exitCode !== 0
+      && !setupFailure(run.output)
+      && expectedRed.test(failureDiagnostics(run.output)),
+    );
+    const production = red && mutations.find((mutation) => !mutation.test && mutation.sequence > red.completionSequence);
+    const green = production && runs.find((run) => run.sequence > latestMutation.completionSequence && run.exitCode === 0);
+    if (red && production && green && firstProduction === production) observedLabel = claim;
+  } else if (claim === "preservation-verified" && firstProduction && latestMutation) {
+    const baseline = runs.find((run) => run.completionSequence < firstProduction.sequence && run.exitCode === 0);
+    const post = runs.find((run) => run.sequence > latestMutation.completionSequence && run.exitCode === 0);
+    if (baseline && post) observedLabel = claim;
+  } else if (claim === "regression-verified" && firstTest && latestMutation && !firstProduction) {
+    const regression = runs.find((run) => run.sequence > latestMutation.completionSequence && run.exitCode === 0);
+    if (regression) observedLabel = claim;
+  } else if ((claim === "validation-only" || claim === "verification-limited") && latestMutation) {
+    const validation = timeline.find((entry) =>
+      entry.sequence > latestMutation.completionSequence
+      && successfulVerification(entry, mutations.map(({ path }) => path)),
+    );
+    const limitedGap = claim !== "verification-limited" || /\b(?:residual|unverified|gap|unavailable|unsafe|cannot|could not)\b/i.test(finalText);
+    if (validation && limitedGap && (claim === "verification-limited" || !firstTest)) observedLabel = claim;
   }
-  if (mode === "preservation" && firstProduction && latestMutation) {
-    const baseline = runs.find((run) => run.sequence < firstProduction.sequence && run.exitCode === 0);
-    const post = runs.find((run) => run.sequence > latestMutation.sequence && run.exitCode === 0);
-    return baseline && post ? "preservation-verified" : null;
-  }
-  if (mode === "regression-verification") {
-    return runs.some((run) => (!latestMutation || run.sequence > latestMutation.sequence) && run.exitCode === 0) ? "regression-verified" : null;
-  }
-  if (mode === "validation-only") {
-    return runs.some((run) => run.advisory && run.phase === "validation" && run.valid && (!latestMutation || run.sequence > latestMutation.sequence)) ? "validation-only" : null;
-  }
-  return null;
+
+  return { claimedLabel: claim, observedMode: mode, observedLabel };
 }
 
 export interface AggregateSample {
@@ -314,7 +356,6 @@ export async function runSdkCell(
     cwd: fixture.path,
     agentDir: options.isolatedAgentDir,
     settingsManager,
-    additionalExtensionPaths: [extensionPath],
     additionalSkillPaths: [skillRoot],
     noPromptTemplates: true,
     noThemes: true,
@@ -338,8 +379,6 @@ export async function runSdkCell(
     await loader.reload();
     const skills = exactPackageSkill(loader.getSkills());
     if (skills.length !== 1) throw new Error(`Expected one package skill, found ${skills.length}`);
-    const extensionResult = loader.getExtensions();
-    if (extensionResult.errors.length > 0) throw new Error(`Extension load failed: ${extensionResult.errors.map((item) => item.error).join("; ")}`);
     const model = options.modelRuntime.getModel(cell.provider, cell.model);
     if (!model) throw new Error(`Model unavailable: ${cell.provider}/${cell.model}`);
     const { session } = await createAgentSession({
@@ -398,9 +437,13 @@ export async function runSdkCell(
     preservedWorking[path] = Boolean(before) && await hash(join(fixture.path, path)).catch(() => "missing") === before;
   }
   const postcheckResult = await postcheck(fixture.path, cell.case.postcheck);
-  const observedMode = extractObservedMode(summary?.timeline ?? []);
-  const observedLabel = extractObservedLabel(summary?.timeline ?? [])
-    ?? inferObservedLabel(summary?.timeline ?? [], observedMode);
+  const observed = inferObservedWorkflow(
+    summary?.timeline ?? [],
+    summary?.finalText ?? "",
+    cell.case.expected.red_output_pattern,
+  );
+  const observedMode = observed.observedMode;
+  const observedLabel = observed.observedLabel;
   const outcome = scoreOutcome({
     expected: cell.case.expected,
     changedPaths: workspace.changedPaths,

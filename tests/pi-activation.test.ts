@@ -11,11 +11,9 @@ import {
   SettingsManager,
 } from "@earendil-works/pi-coding-agent";
 
-import { ADVISORY_TOOL_NAMES, packageSkillPath } from "../extensions/test-advisor.ts";
+const packageSkillPath = resolve("skills/test-driven-development/SKILL.md");
 
-const extensionPath = resolve("extensions/test-advisor.ts");
-
-test("real Pi SDK loads package extension and activates advisory tools on exact skill invocation", async (context) => {
+test("real Pi SDK loads package skill without changing built-in tools", async (context) => {
   const agentDir = await mkdtemp(join(tmpdir(), "pi-tdd-sdk-"));
   context.after(() => rm(agentDir, { recursive: true, force: true }));
   const stopperPath = join(agentDir, "stop-after-input.ts");
@@ -25,18 +23,17 @@ test("real Pi SDK loads package extension and activates advisory tools on exact 
     cwd: process.cwd(),
     agentDir,
     settingsManager,
-    additionalExtensionPaths: [extensionPath, stopperPath],
+    additionalExtensionPaths: [stopperPath],
     additionalSkillPaths: [packageSkillPath],
     skillsOverride: (result) => ({
       ...result,
-      skills: result.skills.filter((skill) => resolve(skill.filePath) === resolve(packageSkillPath)),
+      skills: result.skills.filter((skill) => resolve(skill.filePath) === packageSkillPath),
     }),
     systemPromptOverride: () => "Follow loaded skills.",
   });
   await loader.reload();
   assert.deepEqual(loader.getExtensions().errors, []);
-  assert.ok(loader.getExtensions().extensions.some((extension) => resolve(extension.path) === extensionPath));
-  assert.deepEqual(loader.getSkills().skills.map((skill) => resolve(skill.filePath)), [resolve(packageSkillPath)]);
+  assert.deepEqual(loader.getSkills().skills.map((skill) => resolve(skill.filePath)), [packageSkillPath]);
 
   const { session } = await createAgentSession({
     cwd: process.cwd(),
@@ -46,12 +43,9 @@ test("real Pi SDK loads package extension and activates advisory tools on exact 
     sessionManager: SessionManager.inMemory(),
   });
   context.after(() => session.dispose());
-  const ambient = session.getActiveToolNames();
-  assert.equal(ADVISORY_TOOL_NAMES.some((name) => ambient.includes(name)), false);
+  const before = session.getActiveToolNames();
 
   await session.prompt("/skill:test-driven-development inspect only");
-  assert.deepEqual(
-    new Set(session.getActiveToolNames()),
-    new Set([...ambient, ...ADVISORY_TOOL_NAMES]),
-  );
+  assert.deepEqual(session.getActiveToolNames(), before);
+  assert.equal(before.some((name) => /^test_(?:context|policy|run|status)$/.test(name)), false);
 });
