@@ -39,7 +39,7 @@ Never revert, delete, overwrite, hide, or set aside pre-existing/user work solel
   - `test_run`
   - `test_status`
 - TypeScript package/evaluation tests.
-- Preregistered Pi SDK routing/workflow matrix.
+- Author-attested preregistered Pi SDK routing/workflow matrix.
 
 No prompt template, theme, output style, global instruction, blocking edit hook, auto-revert behavior, or coverage quota.
 
@@ -75,7 +75,7 @@ Records exit status, duration, bounded output, and predeclared red reason. Exact
 
 ### `test_status`
 
-Reports strongest label supported by observed ledger. `tdd-attested` needs valid red, visible production mutation after red, and focused green after mutation. Opaque shell edits force downgrade rather than guess.
+Reports strongest label supported by observed ledger. `tdd-attested` requires a visible test mutation, valid red, later production mutation, final focused green, and no opaque mutation evidence.
 
 Ledger persists in tool-result details for session branching. Package writes no global/project bookkeeping file.
 
@@ -92,7 +92,7 @@ Activation registers tools once and adds them without disabling ambient built-in
 
 ### Automatic activation
 
-Pi always sees skill name and description. Model should load skill when main task asks to implement/change observable production behavior, fix reproducible bug, or refactor production source.
+When skill discovery is enabled, Pi includes skill name and description in system prompt. Model should load skill when main task asks to implement/change observable production behavior, fix reproducible bug, or refactor production source.
 
 Default exclusions include review/explanation only, test-result interpretation, code already written, test-only work, docs/comments only, generated/vendor output, and ordinary copy/style/format-only edits.
 
@@ -118,7 +118,7 @@ From npm after release:
 pi install npm:pi-test-driven-development@0.1.0
 ```
 
-From pinned GitHub release:
+From pinned GitHub release after tag publication:
 
 ```bash
 pi install git:github.com/stijnVanHorenbeek/pi-test-driven-development@v0.1.0
@@ -246,7 +246,7 @@ extensions/lib/                            Polyglot context, policy, command, ev
 skills/test-driven-development/SKILL.md    Lean Pi router
 skills/test-driven-development/references/ Progressive workflow guidance
 evals/                                     Preregistered TypeScript SDK evaluation
- tests/                                    Deterministic TypeScript tests
+tests/                                     Deterministic TypeScript tests
 ```
 
 ## Provenance
