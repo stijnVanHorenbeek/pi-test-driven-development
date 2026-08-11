@@ -18,6 +18,12 @@ One test can contain table-driven cases or multiple related assertions for one c
 
 Prefer public APIs and user-visible behavior over private methods, helper calls, internal order, exact implementation, or source-text grep. Tests should stay green during pure refactor.
 
+## Configuration and repository layout
+
+Build, pack, and dry-run output can validate internal packaging or configuration changes without becoming permanent tests. Do not add tests that mirror internal manifest or config values, assert internal file presence or absence, grow repository-path blacklists, or fail on intentional layout changes.
+
+An exception needs a named external consumer that depends on the exact artifact. Test that consumer-facing contract, not the configuration text that produces it.
+
 ## Level
 
 Choose smallest sufficient level, not smallest possible level:
@@ -42,6 +48,7 @@ Fixtures should expose important inputs. Shared mutable state, uncontrolled time
 - Test computed expectation with same logic as implementation.
 - Framework's own behavior rather than repository boundary.
 - Coverage-only execution with no meaningful assertion.
+- Manifest/config mirrors and repository-layout presence or absence checks without a stable external contract.
 
 Use mutation thought experiment: wrong branch, value, side effect, empty result, or boundary input should fail at least one relevant test.
 

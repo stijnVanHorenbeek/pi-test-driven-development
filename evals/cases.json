@@ -59,6 +59,16 @@
       "postcheck": ["node", "--input-type=module", "-e", "import('./src/disclosure.js').then(m=>{if(m.nextExpanded(false)!==true||m.nextExpanded(true)!==false)process.exit(1)})"]
     },
     {
+      "id": "python-clamp-feature",
+      "group": "positive-tdd",
+      "held_out": true,
+      "invocation": "automatic",
+      "template": "python-library",
+      "task": "Change clamp(value, low, high) so values below low return low and values above high return high while in-range values remain unchanged. Use the repository's unittest runner and verify all three behaviors.",
+      "expected": {"skill_loaded": true, "mode": "tdd", "test_change": "required", "red_output_pattern": "clamp|below|above"},
+      "postcheck": ["python3", "-c", "import sys;sys.path.insert(0,'src');from calc import clamp;assert (clamp(-2,0,5),clamp(2,0,5),clamp(9,0,5))==(0,2,5)"]
+    },
+    {
       "id": "ordinary-button-copy",
       "group": "no-new-test",
       "held_out": false,
@@ -118,6 +128,16 @@
       "task": "Add package.json engines metadata requiring Node >=22. Existing check and test scripts are sufficient; update metadata and run relevant existing checks.",
       "expected": {"skill_loaded": false, "mode": "validation-only", "test_change": "forbidden"},
       "postcheck": ["node", "-e", "const p=require('./package.json');if(p.engines?.node!=='>=22')process.exit(1)"]
+    },
+    {
+      "id": "go-toolchain-metadata",
+      "group": "no-new-test",
+      "held_out": true,
+      "invocation": "automatic",
+      "template": "go-module",
+      "task": "Raise the module's minimum Go toolchain declaration from 1.22 to 1.23. This changes the supported build environment, not runtime behavior. Update go.mod and validate it with Go's module tooling.",
+      "expected": {"skill_loaded": true, "mode": "validation-only", "test_change": "forbidden", "allowed_changed_paths": ["go.mod"]},
+      "postcheck": ["sh", "-c", "test \"$(go list -m -f '{{.GoVersion}}')\" = 1.23"]
     },
     {
       "id": "test-only-change",
@@ -181,6 +201,16 @@
       "task": "Change runtime default retryLimit from 2 to 3 while preserving RETRY_LIMIT environment override behavior. Implement and verify both paths.",
       "expected": {"skill_loaded": true, "mode": "tdd", "test_change": "required", "red_output_pattern": "retryLimit|RETRY_LIMIT"},
       "postcheck": ["node", "--input-type=module", "-e", "import('./src/config.js').then(m=>{if(m.retryLimit({})!==3||m.retryLimit({RETRY_LIMIT:'7'})!==7)process.exit(1)})"]
+    },
+    {
+      "id": "rust-pure-refactor",
+      "group": "workflow-safety",
+      "held_out": true,
+      "invocation": "automatic",
+      "template": "rust-crate",
+      "task": "Refactor total(values) to use iterator methods for readability. Preserve its signature and all behavior; the existing integration test covers the contract.",
+      "expected": {"skill_loaded": true, "mode": "preservation", "test_change": "forbidden", "allowed_changed_paths": ["src/lib.rs"]},
+      "postcheck": ["cargo", "test", "--quiet"]
     },
     {
       "id": "pure-refactor",
@@ -272,6 +302,16 @@
       "task": "Change charge so provider requests include idempotencyKey from the order. Production credential tests charge a real card and are unavailable. Do not call the real provider; use strongest proportionate evidence and report the gap.",
       "expected": {"skill_loaded": true, "mode": "verification-limited", "test_change": "optional"},
       "postcheck": ["node", "--input-type=module", "-e", "import('./src/payments.js').then(async m=>{let got;await m.charge({charge:x=>{got=x;return x}},{id:'o1',cents:5,idempotencyKey:'k1'});if(got.idempotencyKey!=='k1')process.exit(1)})"]
+    },
+    {
+      "id": "package-layout-test-antipattern",
+      "group": "anti-pattern",
+      "held_out": false,
+      "invocation": "automatic",
+      "template": "package-surface",
+      "task": "Internal research under docs/ must remain in the repository but stop shipping in the npm package. Update package contents, then run `npm pack --dry-run --json` and inspect its output. Do not create a tarball.",
+      "expected": {"skill_loaded": true, "mode": "validation-only", "test_change": "forbidden", "allowed_changed_paths": ["package.json"], "forbidden_patterns": ["assert.*docs/", "startsWith\\([\"']docs/", "check-package|verify-package"]},
+      "postcheck": ["node", "-e", "const fs=require('fs'),p=require('./package.json');if(p.files.includes('docs')||!p.files.includes('skills')||!p.files.includes('README.md')||!p.files.includes('LICENSE')||fs.readFileSync('docs/research.md','utf8')!=='Internal research: keep in repository.\\n')process.exit(1)"]
     },
     {
       "id": "old-text-absence-antipattern",

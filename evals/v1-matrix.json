@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "matrix_id": "v1",
-  "version": 8,
+  "version": 15,
   "description": "Preregistered Pi SDK routing and workflow matrix for risk-based test policy.",
   "amendments": [
     {
@@ -35,6 +35,34 @@
     {
       "version": 8,
       "reason": "Reject embedded command substitution in recognized test commands and exclude passing-test lines from feature-specific red matching after final review. Cases, prompts, modes, labels, models, repetitions, and thresholds are unchanged."
+    },
+    {
+      "version": 9,
+      "reason": "Add a package-layout anti-pattern case after a real repository task produced brittle path-blacklist tests. Require validation-only workflow and recognize npm pack dry runs as direct evidence. Existing cases, models, repetitions, and thresholds are unchanged."
+    },
+    {
+      "version": 10,
+      "reason": "Require dry-run package validation explicitly after the version-9 diagnostic used opaque tarball cleanup that correctly remained unsupported. Expected mode, artifacts, models, repetitions, and thresholds are unchanged."
+    },
+    {
+      "version": 11,
+      "reason": "Restrict npm pack validation evidence to dry runs and enforce case-specific allowed changed paths after independent review. Task prompt, expected mode and artifact, models, repetitions, and thresholds are unchanged."
+    },
+    {
+      "version": 12,
+      "reason": "Reject newline and background-operator shell composition so a valid dry run cannot mask a second package command. Cases, expected outcomes, models, repetitions, and thresholds are unchanged."
+    },
+    {
+      "version": 13,
+      "reason": "Add held-out Python TDD, Go metadata validation-only, and Rust preservation cases; recognize Python unittest and read-only Go module validation. Existing cases, models, repetitions, and thresholds are unchanged."
+    },
+    {
+      "version": 14,
+      "reason": "Align Python test-path detection and unittest discovery, classify standalone Go module mutations and read-only validation, and strengthen the Rust preservation contract after independent review. Task prompts, expected modes, models, repetitions, and thresholds are unchanged."
+    },
+    {
+      "version": 15,
+      "reason": "Remove an over-specific Rust source-pattern postcheck after it rejected a valid iterator refactor. Behavioral preservation checks, required source mutation, task prompt, modes, models, repetitions, and thresholds are unchanged."
     }
   ],
   "models": [

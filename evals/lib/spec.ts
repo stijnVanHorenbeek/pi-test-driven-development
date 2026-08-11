@@ -17,6 +17,7 @@ export interface EvaluationCase {
     mode: ExpectedMode;
     test_change: "required" | "forbidden" | "optional";
     preserve_working?: string[];
+    allowed_changed_paths?: string[];
     forbidden_patterns?: string[];
     red_output_pattern?: string;
   };

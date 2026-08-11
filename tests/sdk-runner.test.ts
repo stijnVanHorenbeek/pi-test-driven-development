@@ -69,7 +69,11 @@ test("infers TDD only from behavior-specific, causally ordered built-in evidence
 });
 
 test("recognizes common language-native test paths", () => {
-  for (const [path, command] of [["math_test.go", "go test ./..."], ["test_math.py", "pytest"]]) {
+  for (const [path, command] of [
+    ["math_test.go", "go test ./..."],
+    ["test_math.py", "pytest"],
+    ["tests/test_math.py", "python3 -m unittest"],
+  ]) {
     const timeline = [
       { sequence: 1, completionSequence: 2, toolName: "edit", args: { path }, resultText: "ok" },
       { sequence: 3, completionSequence: 4, toolName: "bash", args: { command }, resultText: "multiply missing\nCommand exited with code 1" },
@@ -106,12 +110,27 @@ test("validates preservation, regression, validation, and limited claims from bu
     { sequence: 3, completionSequence: 4, toolName: "bash", args: { command: "git diff --check" }, resultText: "" },
   ], "Evidence: validation-only").observedLabel, "validation-only");
   assert.equal(inferObservedWorkflow([
+    { sequence: 1, completionSequence: 2, toolName: "edit", args: { path: "package.json" }, resultText: "ok" },
+    { sequence: 3, completionSequence: 4, toolName: "bash", args: { command: "npm pack --dry-run --json" }, resultText: "[]" },
+  ], "Evidence: validation-only").observedLabel, "validation-only");
+  assert.equal(inferObservedWorkflow([
+    { sequence: 1, completionSequence: 2, toolName: "edit", args: { path: "go.mod" }, resultText: "ok" },
+    { sequence: 3, completionSequence: 4, toolName: "bash", args: { command: "go mod edit -json" }, resultText: "{}" },
+  ], "Evidence: validation-only").observedLabel, "validation-only");
+  assert.equal(inferObservedWorkflow([
+    { sequence: 1, completionSequence: 2, toolName: "bash", args: { command: "go mod edit -go=1.23" }, resultText: "" },
+    { sequence: 3, completionSequence: 4, toolName: "bash", args: { command: "go list -m -f '{{.GoVersion}}'" }, resultText: "1.23" },
+  ], "Evidence: validation-only").observedLabel, "validation-only");
+  assert.equal(inferObservedWorkflow([
     validationMutation,
     { sequence: 3, completionSequence: 4, toolName: "read", args: { path: "src/config.js" }, resultText: "updated" },
   ], "Evidence: validation-only").observedLabel, "validation-only");
   for (const irrelevant of [
     { sequence: 3, completionSequence: 4, toolName: "read", args: { path: "README.md" }, resultText: "docs" },
     { sequence: 3, completionSequence: 4, toolName: "bash", args: { command: "pwd" }, resultText: "/repo" },
+    { sequence: 3, completionSequence: 4, toolName: "bash", args: { command: "npm pack --json" }, resultText: "{}" },
+    { sequence: 3, completionSequence: 4, toolName: "bash", args: { command: "npm pack --dry-run --json\nnpm pack" }, resultText: "{}" },
+    { sequence: 3, completionSequence: 4, toolName: "bash", args: { command: "npm pack --dry-run --json & npm pack" }, resultText: "{}" },
   ]) {
     assert.equal(inferObservedWorkflow([validationMutation, irrelevant], "Evidence: validation-only").observedLabel, null);
   }

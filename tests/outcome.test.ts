@@ -23,6 +23,35 @@ test("validation-only outcome passes with desired artifact, no test edit, and po
   assert.equal(result.passed, true);
 });
 
+test("Python unittest naming counts as a test change", () => {
+  for (const path of ["test_math.py", "math_test.py"]) {
+    const result = scoreOutcome({
+      expected: { skill_loaded: false, mode: "tdd", test_change: "required" },
+      changedPaths: ["src/math.py", path],
+      diff: "",
+      postcheck: { exitCode: 0, stdout: "", stderr: "" },
+      preservedWorking: {},
+      observedMode: null,
+    });
+    assert.equal(result.testChanged, true, path);
+    assert.equal(result.testChangePassed, true, path);
+  }
+});
+
+test("case-specific allowed paths reject one-off validation scripts", () => {
+  const result = scoreOutcome({
+    expected: { ...expected, allowed_changed_paths: ["package.json"] },
+    changedPaths: ["package.json", "scripts/validate-package.mjs"],
+    diff: "+validate package layout",
+    postcheck: { exitCode: 0, stdout: "", stderr: "" },
+    preservedWorking: {},
+    observedMode: null,
+  });
+  assert.deepEqual(result.unexpectedChangedPaths, ["scripts/validate-package.mjs"]);
+  assert.equal(result.allowedChangedPathsPassed, false);
+  assert.equal(result.passed, false);
+});
+
 test("artificial test, forbidden pattern, failed postcheck, or changed user work fails outcome", () => {
   const result = scoreOutcome({
     expected: { ...expected, forbidden_patterns: ["toMatchSnapshot"] },

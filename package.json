@@ -35,7 +35,6 @@
     "eval:report": "tsx evals/run-evals.ts --report-only"
   },
   "files": [
-    "docs",
     "skills",
     "README.md",
     "LICENSE"

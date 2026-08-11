@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFile, readdir } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
@@ -19,20 +19,6 @@ function foldedDescription(metadata: string) {
   assert.ok(match, "missing folded description");
   return match[1].split("\n").map((line) => line.trim()).filter(Boolean).join(" ");
 }
-
-test("package manifest exposes only intended skill tree", async () => {
-  const manifest = JSON.parse(await readFile(join(root, "package.json"), "utf8"));
-  assert.deepEqual(manifest.pi, {
-    skills: ["./skills"],
-  });
-  assert.equal(manifest.private, false);
-  assert.deepEqual(manifest.publishConfig, { access: "public" });
-  assert.equal(manifest.repository.url, "git+https://github.com/stijnVanHorenbeek/pi-test-driven-development.git");
-  assert.equal(manifest.homepage, "https://github.com/stijnVanHorenbeek/pi-test-driven-development#readme");
-  assert.equal(manifest.bugs.url, "https://github.com/stijnVanHorenbeek/pi-test-driven-development/issues");
-  assert.equal(manifest.files.includes("tests"), false);
-  assert.equal(manifest.files.includes("evals"), false);
-});
 
 test("skill frontmatter is valid, bounded, and routes both positive and negative boundaries", async () => {
   const text = await readFile(skillPath, "utf8");
@@ -79,19 +65,4 @@ test("critical safety and evidence concepts are explicit without source-text rit
   assert.match(text, /`read`/);
   assert.match(text, /`bash`/);
   assert.doesNotMatch(text, /test_(?:context|policy|run|status)/);
-});
-
-test("package has exactly one discovered skill and no prompt/theme resources", async () => {
-  const skills: string[] = [];
-  async function walk(path: string) {
-    for (const entry of await readdir(path, { withFileTypes: true })) {
-      const target = join(path, entry.name);
-      if (entry.isDirectory()) await walk(target);
-      else if (entry.name === "SKILL.md") skills.push(target);
-    }
-  }
-  await walk(join(root, "skills"));
-  assert.deepEqual(skills, [skillPath]);
-  await assert.rejects(() => readdir(join(root, "prompts")));
-  await assert.rejects(() => readdir(join(root, "themes")));
 });

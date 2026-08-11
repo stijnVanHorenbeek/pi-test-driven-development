@@ -82,7 +82,7 @@ async function runtimePackageHash() {
   for (const file of ["package.json", "README.md", "LICENSE"]) {
     hash.update(file).update("\0").update(await readFile(join(root, file))).update("\0");
   }
-  for (const directory of ["docs", "skills"]) {
+  for (const directory of ["skills"]) {
     hash.update(directory).update("\0").update(await treeHash(join(root, directory))).update("\0");
   }
   return hash.digest("hex");

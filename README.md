@@ -159,13 +159,13 @@ npm pack --dry-run --json
 
 ## Evaluations
 
-The author attests that evaluation inputs were written before the initial skill implementation. The repository had no commits, so the original chronology is not independently verifiable. Matrix amendments 4–8 record the migration to a skill-only runtime, hardened built-in tool evidence, transparent Codex thinking-level tuning, and independent-review fixes. The harness hashes current inputs and code for every run. Future preregistration should use immutable commit history.
+The author attests that evaluation inputs were written before the initial skill implementation. The repository had no commits, so the original chronology is not independently verifiable. Matrix amendments 4–15 record the migration to a skill-only runtime, hardened built-in tool evidence, transparent Codex thinking-level tuning, and independent-review fixes. The harness hashes current inputs and code for every run. Future preregistration should use immutable commit history.
 
 - `evals/v1-matrix.json`
 - `evals/cases.json`
 - `evals/fixtures/templates.json`
 
-The matrix includes two model configurations, three repetitions, 35 natural fixture-repository tasks, automatic positive and negative routing, explicit invocation, workflow safety, anti-patterns, and held-out cases.
+The matrix includes two model configurations, three repetitions, 39 natural fixture-repository tasks, automatic positive and negative routing, explicit invocation, workflow safety, anti-patterns, and held-out cases.
 
 Report preregistration and current results without model calls:
 
@@ -195,7 +195,6 @@ Built-in tool events cannot reconstruct every shell mutation. The evaluation mar
 ## Package layout
 
 ```text
-docs/                                      Acceptance contract and provenance
 skills/test-driven-development/SKILL.md    Lean Pi router
 skills/test-driven-development/references/ Progressive workflow guidance
 evals/                                     Preregistered TypeScript SDK evaluation
@@ -211,8 +210,6 @@ The package is a derivative adaptation of [`obra/superpowers`](https://github.co
 - `LICENSE`
 
 Upstream is MIT licensed, copyright (c) 2025 Jesse Vincent. This adaptation retains valid-red and behavior-test guidance. It rejects universal test-per-change mandates and delete/restart handling of existing work.
-
-The local skill currently installed had no recorded Git provenance but shows strong upstream lineage. See [`docs/v1-acceptance-contract.md`](docs/v1-acceptance-contract.md) for the bounded inventory, rejected material, research basis, and acceptance gates.
 
 This package is not affiliated with or endorsed by the upstream project or cited testing authors.
 

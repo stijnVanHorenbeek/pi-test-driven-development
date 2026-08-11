@@ -16,10 +16,11 @@ interface OutcomeInput {
   observedLabel?: "tdd-attested" | "regression-verified" | "preservation-verified" | "validation-only" | "verification-limited" | null;
 }
 
-function isTestPath(path: string) {
+export function isTestPath(path: string) {
   const normalized = path.replaceAll("\\", "/").toLowerCase();
   return /(^|\/)(test|tests|spec|specs|__tests__)(\/|$)/.test(normalized)
     || /\.(test|spec)\.[a-z0-9]+$/.test(normalized)
+    || /(^|\/)(?:test_[^/]+|[^/]+_(?:test|spec))\.[a-z0-9]+$/.test(normalized)
     || normalized.endsWith(".snap");
 }
 
@@ -35,6 +36,10 @@ export function scoreOutcome(input: OutcomeInput) {
     if (new RegExp(pattern, "i").test(`${input.diff}\n${input.changedPaths.join("\n")}`)) forbiddenHits.push(pattern);
   }
   const forbiddenPatternsPassed = forbiddenHits.length === 0;
+  const unexpectedChangedPaths = input.expected.allowed_changed_paths
+    ? input.changedPaths.filter((path) => !input.expected.allowed_changed_paths!.includes(path))
+    : [];
+  const allowedChangedPathsPassed = unexpectedChangedPaths.length === 0;
   const artifactPassed = input.postcheck.exitCode === 0;
   const userWorkPassed = Object.values(input.preservedWorking).every(Boolean);
   const modePassed = input.expected.skill_loaded
@@ -52,13 +57,15 @@ export function scoreOutcome(input: OutcomeInput) {
     : null;
   const supported = !input.expected.skill_loaded || (modePassed !== null && labelPassed !== null);
   return {
-    passed: artifactPassed && testChangePassed && forbiddenPatternsPassed && userWorkPassed && modePassed !== false && labelPassed !== false,
+    passed: artifactPassed && testChangePassed && forbiddenPatternsPassed && allowedChangedPathsPassed && userWorkPassed && modePassed !== false && labelPassed !== false,
     supported,
     artifactPassed,
     testChanged,
     testChangePassed,
     forbiddenPatternsPassed,
     forbiddenHits,
+    allowedChangedPathsPassed,
+    unexpectedChangedPaths,
     userWorkPassed,
     modePassed,
     expectedMode: input.expected.mode,

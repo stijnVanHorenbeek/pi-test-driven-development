@@ -15,7 +15,7 @@ import { promisify } from "node:util";
 
 import { EventEvidence } from "./events.ts";
 import { createFixtureRepository } from "./fixtures.ts";
-import { scoreOutcome } from "./outcome.ts";
+import { isTestPath, scoreOutcome } from "./outcome.ts";
 import { buildPrompt, type EvaluationCell, type EvaluationSpec } from "./runner.ts";
 import { scoreRouting, type RoutingSample } from "./scoring.ts";
 import type { EvaluationAcceptance, ExpectedMode } from "./spec.ts";
@@ -61,15 +61,6 @@ function claimedLabel(finalText: string): ObservedLabel | null {
   return (matches.at(-1)?.[1]?.toLowerCase() as ObservedLabel | undefined) ?? null;
 }
 
-function testPath(path: unknown) {
-  if (typeof path !== "string") return false;
-  const value = path.replaceAll("\\", "/").toLowerCase();
-  return /(^|\/)(test|tests|spec|specs|__tests__)(\/|$)/.test(value)
-    || /\.(test|spec)\.[a-z0-9]+$/.test(value)
-    || /(^|\/)(?:test_[^/]+|[^/]+_(?:test|spec))\.[a-z0-9]+$/.test(value)
-    || value.endsWith(".snap");
-}
-
 function commandExitCode(entry: TimelineEntry) {
   if (entry.completionSequence === undefined) return null;
   const failure = entry.resultText.match(/Command exited with code (\d+)/i);
@@ -79,12 +70,12 @@ function commandExitCode(entry: TimelineEntry) {
 
 function hasShellComposition(command: string) {
   const unquoted = command.replace(/'(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*"/g, "");
-  return /&&|\|\||[;|]/.test(unquoted);
+  return /[\r\n]|&&|\|\||[;|]|(?:^|[^>])&(?![&>\d])/.test(unquoted);
 }
 
 function testCommand(entry: TimelineEntry) {
   if (entry.toolName !== "bash" || typeof entry.args?.command !== "string" || hasShellComposition(entry.args.command)) return undefined;
-  if (!/^\s*(?:npm\s+(?:run\s+)?test|pnpm\s+(?:run\s+)?test|yarn\s+test|bun\s+test|node\s+--test|pytest|go\s+test|cargo\s+test|rspec|vitest|jest|\.\/gradlew.*\btest|gradle\s+test|mvn.*\btest|\.\/mvnw.*\btest|dotnet\s+test|mix\s+test|phpunit|swift\s+test|dart\s+test|flutter\s+test|ctest)\b/i.test(entry.args.command)) return undefined;
+  if (!/^\s*(?:npm\s+(?:run\s+)?test|pnpm\s+(?:run\s+)?test|yarn\s+test|bun\s+test|node\s+--test|python(?:3(?:\.\d+)?)?\s+-m\s+unittest|pytest|go\s+test|cargo\s+test|rspec|vitest|jest|\.\/gradlew.*\btest|gradle\s+test|mvn.*\btest|\.\/mvnw.*\btest|dotnet\s+test|mix\s+test|phpunit|swift\s+test|dart\s+test|flutter\s+test|ctest)\b/i.test(entry.args.command)) return undefined;
   return {
     sequence: entry.sequence,
     completionSequence: entry.completionSequence ?? entry.sequence,
@@ -123,12 +114,25 @@ function samePath(left: unknown, right: unknown) {
   return a === b || a.endsWith(`/${b}`) || b.endsWith(`/${a}`);
 }
 
+function knownCommandMutation(entry: TimelineEntry) {
+  if (entry.toolName !== "bash" || entry.completionSequence === undefined || entry.isError) return undefined;
+  const command = typeof entry.args?.command === "string" ? entry.args.command : "";
+  if (hasShellComposition(command) || !/^\s*go\s+mod\s+edit\b/.test(command)) return undefined;
+  if (!/(?:^|\s)-(?:fmt\b|go=|module=|toolchain=|require=|droprequire=|exclude=|dropexclude=|replace=|dropreplace=|tool=|droptool=)/.test(command)) return undefined;
+  return {
+    sequence: entry.sequence,
+    completionSequence: entry.completionSequence,
+    path: "go.mod",
+    test: false,
+  };
+}
+
 function successfulVerification(entry: TimelineEntry, changedPaths: string[]) {
   if (entry.sequence < 1 || entry.completionSequence === undefined || entry.isError) return false;
   if (entry.toolName === "read") return changedPaths.some((path) => samePath(path, entry.args?.path));
   if (entry.toolName !== "bash" || typeof entry.args?.command !== "string") return false;
   const command = entry.args.command;
-  const recognized = /^\s*(?:git\s+diff\b|npm\s+(?:test|run\s+(?:test|check|build|lint|typecheck))\b|pnpm\s+(?:test|check|build|lint|typecheck)\b|yarn\s+(?:test|check|build|lint|typecheck)\b|bun\s+(?:test|run\s+(?:test|check|build|lint|typecheck))\b|tsc\b|pytest\b|go\s+test\b|cargo\s+test\b|rspec\b|vitest\b|jest\b|dotnet\s+test\b|mix\s+test\b|phpunit\b|swift\s+test\b|dart\s+test\b|flutter\s+test\b|ctest\b)/i.test(command);
+  const recognized = /^\s*(?:git\s+diff\b|npm\s+(?:test|pack(?=\s+[^\n]*--dry-run\b)|run\s+(?:test|check|build|lint|typecheck))\b|pnpm\s+(?:test|check|build|lint|typecheck)\b|yarn\s+(?:test|check|build|lint|typecheck)\b|bun\s+(?:test|run\s+(?:test|check|build|lint|typecheck))\b|tsc\b|pytest\b|go\s+(?:test\b|mod\s+(?:edit\s+-json\b|tidy\s+-diff\b)|list\s+-m\b)|cargo\s+test\b|rspec\b|vitest\b|jest\b|dotnet\s+test\b|mix\s+test\b|phpunit\b|swift\s+test\b|dart\s+test\b|flutter\s+test\b|ctest\b)/i.test(command);
   return recognized && !hasShellComposition(command) && commandExitCode(entry) === 0 && !looksLikeOpaqueMutation(command);
 }
 
@@ -149,19 +153,23 @@ export function inferObservedWorkflow(timeline: TimelineEntry[], finalText: stri
     return { claimedLabel: claim, observedMode: mode, observedLabel: null };
   }
 
-  const mutations = timeline
-    .filter((entry) =>
+  const mutations = timeline.flatMap((entry) => {
+    if (
       (entry.toolName === "edit" || entry.toolName === "write")
       && entry.completionSequence !== undefined
       && typeof entry.args?.path === "string"
-      && !entry.isError,
-    )
-    .map((entry) => ({
-      sequence: entry.sequence,
-      completionSequence: entry.completionSequence ?? entry.sequence,
-      path: String(entry.args.path),
-      test: testPath(entry.args.path),
-    }));
+      && !entry.isError
+    ) {
+      return [{
+        sequence: entry.sequence,
+        completionSequence: entry.completionSequence,
+        path: String(entry.args.path),
+        test: isTestPath(String(entry.args.path)),
+      }];
+    }
+    const mutation = knownCommandMutation(entry);
+    return mutation ? [mutation] : [];
+  });
   const runs = timeline.map(testCommand).filter((value): value is NonNullable<ReturnType<typeof testCommand>> => Boolean(value));
   const firstProduction = mutations.find((mutation) => !mutation.test);
   const firstTest = mutations.find((mutation) => mutation.test);
