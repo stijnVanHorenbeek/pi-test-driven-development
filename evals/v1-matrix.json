@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "matrix_id": "v1",
+  "version": 3,
+  "description": "Preregistered Pi SDK routing and workflow matrix for risk-based test policy.",
+  "amendments": [
+    {
+      "version": 1,
+      "reason": "Initial preregistration before skill or extension prompt implementation."
+    },
+    {
+      "version": 2,
+      "reason": "Replace github-copilot/claude-haiku-4.5 after isolated SDK smoke returned zero-token error responses for every selected task. Error cells remain in ignored local results and are not reused. No task prompt or expected label changed."
+    },
+    {
+      "version": 3,
+      "reason": "Clarify that original preregistration chronology is author-attested because repository had no immutable commit history. Evaluation cases, prompts, expected outcomes, models, repetitions, and thresholds are unchanged."
+    }
+  ],
+  "models": [
+    {
+      "provider": "openai-codex",
+      "model": "gpt-5.4-mini",
+      "thinking": "low"
+    },
+    {
+      "provider": "openai-codex",
+      "model": "gpt-5.6-sol",
+      "thinking": "low"
+    }
+  ],
+  "repetitions": 3,
+  "retry_limit": 1,
+  "timeout_seconds": 300,
+  "inter_call_delay_ms": 1000,
+  "tracks": ["tuning", "held-out"],
+  "system_prompt": "You are a coding assistant. Follow loaded skills and use available repository tools. Complete the user's task, verify proportionally, preserve pre-existing work, and report only evidence you observed.",
+  "isolation": {
+    "settings": "in-memory",
+    "sessions": "in-memory",
+    "resources": "package-only",
+    "context_files": false,
+    "prompt_templates": false,
+    "themes": false,
+    "project_trust": false,
+    "startup_network": false,
+    "fixture_git_repository": true
+  },
+  "acceptance": {
+    "automatic_positive_load_minimum_per_three": 2,
+    "automatic_negative_load_maximum_per_three": 0,
+    "explicit_load_minimum_per_three": 3,
+    "workflow_outcome_minimum_per_three": 2,
+    "user_work_preservation_required": true,
+    "unsupported_or_missing_cells_block_complete_claim": true
+  }
+}

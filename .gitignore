@@ -1,0 +1,8 @@
+node_modules/
+coverage/
+dist/
+*.tgz
+*.log
+evals/results/
+.pi-subagents/
+.DS_Store

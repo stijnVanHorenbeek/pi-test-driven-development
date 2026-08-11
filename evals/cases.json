@@ -1,0 +1,383 @@
+{
+  "schema_version": 1,
+  "preregistered_at": "2026-08-11",
+  "note": "Prompts and labels fixed before skill implementation. Held-out cases are excluded from prompt-tuning runs.",
+  "cases": [
+    {
+      "id": "logic-feature",
+      "group": "positive-tdd",
+      "held_out": false,
+      "invocation": "automatic",
+      "template": "node-library",
+      "task": "Add an exported multiply(a, b) function in src/math.js. It must return the product for positive, negative, and zero operands. Implement the change and verify it.",
+      "expected": {"skill_loaded": true, "mode": "tdd", "test_change": "required"},
+      "postcheck": ["node", "--input-type=module", "-e", "import('./src/math.js').then(m=>{if(m.multiply(3,-2)!==-6||m.multiply(8,0)!==0)process.exit(1)})"]
+    },
+    {
+      "id": "reproducible-bug",
+      "group": "positive-tdd",
+      "held_out": false,
+      "invocation": "automatic",
+      "template": "node-library",
+      "base_files": {
+        "src/math.js": "export function add(a, b) { return a + b; }\nexport function divide(a, b) { return a / b; }\n",
+        "test/math.test.js": "import test from 'node:test';\nimport assert from 'node:assert/strict';\nimport { add, divide } from '../src/math.js';\ntest('adds',()=>assert.equal(add(2,3),5));\ntest('divides',()=>assert.equal(divide(6,2),3));\n"
+      },
+      "task": "Fix divide(a, b): a zero divisor currently returns Infinity, but public contract requires RangeError with message 'division by zero'. Reproduce the bug, fix it, and verify nearby behavior.",
+      "expected": {"skill_loaded": true, "mode": "tdd", "test_change": "required"},
+      "postcheck": ["node", "--input-type=module", "-e", "import('./src/math.js').then(m=>{try{m.divide(1,0);process.exit(1)}catch(e){if(!(e instanceof RangeError)||e.message!=='division by zero')process.exit(1)}})"]
+    },
+    {
+      "id": "cli-contract",
+      "group": "positive-tdd",
+      "held_out": false,
+      "invocation": "automatic",
+      "template": "node-cli",
+      "task": "Extend formatStatus(status, options) so options.json === true returns exactly JSON.stringify({ status }) while existing text output stays unchanged. Implement and verify this CLI output contract.",
+      "expected": {"skill_loaded": true, "mode": "tdd", "test_change": "required"},
+      "postcheck": ["node", "--input-type=module", "-e", "import('./src/cli.js').then(m=>{if(m.formatStatus('ready',{json:true})!=='{\"status\":\"ready\"}'||m.formatStatus('ready')!=='status=ready')process.exit(1)})"]
+    },
+    {
+      "id": "migration-transformation",
+      "group": "positive-tdd",
+      "held_out": false,
+      "invocation": "automatic",
+      "template": "node-migration",
+      "task": "Update migrateProfile(profile) so legacy timeout seconds become timeoutMs milliseconds, the old timeout key is removed, and every unrelated field is preserved. Implement and verify the migration transformation.",
+      "expected": {"skill_loaded": true, "mode": "tdd", "test_change": "required"},
+      "postcheck": ["node", "--input-type=module", "-e", "import('./src/migrate.js').then(m=>{const x=m.migrateProfile({id:'p1',timeout:3,theme:'dark'});if(x.timeoutMs!==3000||'timeout' in x||x.theme!=='dark'||x.id!=='p1')process.exit(1)})"]
+    },
+    {
+      "id": "interaction-state-change",
+      "group": "positive-tdd",
+      "held_out": false,
+      "invocation": "automatic",
+      "template": "node-ui",
+      "base_files": {"src/disclosure.js": "export function nextExpanded(current) { return current; }\n"},
+      "task": "Implement disclosure interaction state in src/disclosure.js: nextExpanded(current) toggles true to false and false to true. Verify both transitions.",
+      "expected": {"skill_loaded": true, "mode": "tdd", "test_change": "required"},
+      "postcheck": ["node", "--input-type=module", "-e", "import('./src/disclosure.js').then(m=>{if(m.nextExpanded(false)!==true||m.nextExpanded(true)!==false)process.exit(1)})"]
+    },
+    {
+      "id": "ordinary-button-copy",
+      "group": "no-new-test",
+      "held_out": false,
+      "invocation": "automatic",
+      "template": "static-site",
+      "task": "Change button text in public/index.html from 'Save draft' to 'Save'. Make only the needed copy edit and validate it proportionally.",
+      "expected": {"skill_loaded": false, "mode": "validation-only", "test_change": "forbidden"},
+      "postcheck": ["node", "-e", "const s=require('fs').readFileSync('public/index.html','utf8');if(!s.includes('>Save</button>'))process.exit(1)"]
+    },
+    {
+      "id": "punctuation-typo",
+      "group": "no-new-test",
+      "held_out": false,
+      "invocation": "automatic",
+      "template": "static-site",
+      "base_files": {"public/index.html": "<!doctype html>\n<p>Changes saved..</p>\n"},
+      "task": "Fix the duplicated period in public/index.html. Do not broaden the change.",
+      "expected": {"skill_loaded": false, "mode": "validation-only", "test_change": "forbidden"},
+      "postcheck": ["node", "-e", "const s=require('fs').readFileSync('public/index.html','utf8');if(!s.includes('Changes saved.</p>')||s.includes('saved..'))process.exit(1)"]
+    },
+    {
+      "id": "css-only-tweak",
+      "group": "no-new-test",
+      "held_out": false,
+      "invocation": "automatic",
+      "template": "static-site",
+      "task": "Change .save text color in styles/site.css from #222 to #111. No markup or behavior changes.",
+      "expected": {"skill_loaded": false, "mode": "validation-only", "test_change": "forbidden"},
+      "postcheck": ["node", "-e", "const s=require('fs').readFileSync('styles/site.css','utf8');if(!s.includes('#111'))process.exit(1)"]
+    },
+    {
+      "id": "docs-comment-only",
+      "group": "no-new-test",
+      "held_out": false,
+      "invocation": "automatic",
+      "template": "docs-only",
+      "task": "Correct README command from `npm test` to `npm run test` and change the source comment to 'Parse one input value.' No runtime code changes.",
+      "expected": {"skill_loaded": false, "mode": "validation-only", "test_change": "forbidden"},
+      "postcheck": ["node", "-e", "const f=require('fs');if(!f.readFileSync('README.md','utf8').includes('`npm run test`')||!f.readFileSync('src/example.js','utf8').includes('Parse one input value.'))process.exit(1)"]
+    },
+    {
+      "id": "generated-vendor-output",
+      "group": "no-new-test",
+      "held_out": false,
+      "invocation": "automatic",
+      "template": "generated-vendor",
+      "task": "Change schema/source.json model name from Widget to Gadget, then regenerate generated/client.js with the repository generator. Do not edit vendor content.",
+      "expected": {"skill_loaded": false, "mode": "validation-only", "test_change": "forbidden"},
+      "postcheck": ["node", "-e", "const f=require('fs');if(JSON.parse(f.readFileSync('schema/source.json')).name!=='Gadget'||!f.readFileSync('generated/client.js','utf8').includes(\"'Gadget'\")||f.readFileSync('vendor/NOTICE.txt','utf8')!=='Vendored dependency notice.\\n')process.exit(1)"]
+    },
+    {
+      "id": "dependency-metadata-sufficient-checks",
+      "group": "no-new-test",
+      "held_out": false,
+      "invocation": "automatic",
+      "template": "node-config",
+      "task": "Add package.json engines metadata requiring Node >=22. Existing check and test scripts are sufficient; update metadata and run relevant existing checks.",
+      "expected": {"skill_loaded": false, "mode": "validation-only", "test_change": "forbidden"},
+      "postcheck": ["node", "-e", "const p=require('./package.json');if(p.engines?.node!=='>=22')process.exit(1)"]
+    },
+    {
+      "id": "test-only-change",
+      "group": "no-new-test",
+      "held_out": false,
+      "invocation": "automatic",
+      "template": "node-library",
+      "task": "Add a test case showing add(-2, -3) returns -5. Do not change production code because behavior already works.",
+      "expected": {"skill_loaded": false, "mode": "regression-verification", "test_change": "required"},
+      "postcheck": ["npm", "test"]
+    },
+    {
+      "id": "accessibility-label",
+      "group": "mixed-boundary",
+      "held_out": false,
+      "invocation": "automatic",
+      "template": "node-ui",
+      "task": "Change rendered button contract so its accessible name is 'Save changes' via aria-label while visible text remains 'Save draft'. Implement and verify the accessibility-facing behavior.",
+      "expected": {"skill_loaded": true, "mode": "tdd", "test_change": "required"},
+      "postcheck": ["node", "--input-type=module", "-e", "import('./src/button.js').then(m=>{const s=m.renderButton();if(!s.includes('aria-label=\"Save changes\"')||!s.includes('>Save draft</button>'))process.exit(1)})"]
+    },
+    {
+      "id": "legal-warning-copy",
+      "group": "mixed-boundary",
+      "held_out": false,
+      "invocation": "automatic",
+      "template": "node-cli",
+      "base_files": {"src/cli.js": "export function deletionWarning() { return 'Deletion cannot be undone.'; }\n"},
+      "task": "Legal approved exact deletion warning is 'Deletion is permanent and cannot be undone.' Update the user-facing CLI contract to that exact sentence and verify it.",
+      "expected": {"skill_loaded": true, "mode": "tdd", "test_change": "required"},
+      "postcheck": ["node", "--input-type=module", "-e", "import('./src/cli.js').then(m=>{if(m.deletionWarning()!=='Deletion is permanent and cannot be undone.')process.exit(1)})"]
+    },
+    {
+      "id": "localization-key",
+      "group": "mixed-boundary",
+      "held_out": true,
+      "invocation": "automatic",
+      "template": "node-ui",
+      "base_files": {"src/messages.js": "const messages = { save: 'Save draft' };\nexport function message(key) { return messages[key]; }\n"},
+      "task": "Add stable localization key saveChanges with English value 'Save changes'. Existing save key must remain unchanged. Implement and verify both contracts.",
+      "expected": {"skill_loaded": true, "mode": "tdd", "test_change": "required"},
+      "postcheck": ["node", "--input-type=module", "-e", "import('./src/messages.js').then(m=>{if(m.message('saveChanges')!=='Save changes'||m.message('save')!=='Save draft')process.exit(1)})"]
+    },
+    {
+      "id": "error-contract",
+      "group": "mixed-boundary",
+      "held_out": false,
+      "invocation": "automatic",
+      "template": "node-cli",
+      "base_files": {"src/cli.js": "export function unknownCommand(name) { return { code: 1, stderr: `Unknown: ${name}` }; }\n"},
+      "task": "Change unknownCommand(name) contract to exit code 2 and stderr `Unknown command: <name>`. Implement and verify exact public CLI behavior.",
+      "expected": {"skill_loaded": true, "mode": "tdd", "test_change": "required"},
+      "postcheck": ["node", "--input-type=module", "-e", "import('./src/cli.js').then(m=>{const x=m.unknownCommand('ship');if(x.code!==2||x.stderr!=='Unknown command: ship')process.exit(1)})"]
+    },
+    {
+      "id": "runtime-config",
+      "group": "mixed-boundary",
+      "held_out": false,
+      "invocation": "automatic",
+      "template": "node-config",
+      "task": "Change runtime default retryLimit from 2 to 3 while preserving RETRY_LIMIT environment override behavior. Implement and verify both paths.",
+      "expected": {"skill_loaded": true, "mode": "tdd", "test_change": "required"},
+      "postcheck": ["node", "--input-type=module", "-e", "import('./src/config.js').then(m=>{if(m.retryLimit({})!==3||m.retryLimit({RETRY_LIMIT:'7'})!==7)process.exit(1)})"]
+    },
+    {
+      "id": "pure-refactor",
+      "group": "workflow-safety",
+      "held_out": false,
+      "invocation": "automatic",
+      "template": "node-library",
+      "base_files": {
+        "src/math.js": "export function add(a,b){return a+b;}\nexport function invoiceTotal(lines){let total=0;for(const line of lines){total=total+line.price*line.quantity;}return total;}\n",
+        "test/math.test.js": "import test from 'node:test';import assert from 'node:assert/strict';import {invoiceTotal} from '../src/math.js';test('totals invoice lines',()=>assert.equal(invoiceTotal([{price:4,quantity:2},{price:3,quantity:1}]),11));\n"
+      },
+      "task": "Refactor invoiceTotal for readability using array methods. Preserve all behavior; do not change its interface or semantics.",
+      "expected": {"skill_loaded": true, "mode": "preservation", "test_change": "optional"},
+      "postcheck": ["npm", "test"]
+    },
+    {
+      "id": "existing-user-patch",
+      "group": "workflow-safety",
+      "held_out": false,
+      "invocation": "automatic",
+      "template": "node-library",
+      "working_files": {"src/math.js": "export function add(a, b) { return a + b; }\nexport function clamp(value, min, max) { return Math.min(max, Math.max(min, value)); }\n"},
+      "task": "Review the existing uncommitted clamp implementation and add worthwhile regression coverage if needed. Preserve the incoming implementation; do not recreate its history.",
+      "expected": {"skill_loaded": false, "mode": "regression-verification", "test_change": "required", "preserve_working": ["src/math.js"]},
+      "postcheck": ["node", "--input-type=module", "-e", "import('./src/math.js').then(m=>{if(m.clamp(9,0,5)!==5||m.clamp(-2,0,5)!==0)process.exit(1)})"]
+    },
+    {
+      "id": "dirty-tree-bug",
+      "group": "workflow-safety",
+      "held_out": true,
+      "invocation": "automatic",
+      "template": "node-library",
+      "base_files": {"src/math.js": "export function add(a,b){return a+b;}\nexport function divide(a,b){return a/b;}\n"},
+      "working_files": {"NOTES.md": "User draft: keep this exact line.\n", "src/user-work.js": "export const draft = 'keep';\n"},
+      "task": "Fix divide so a zero divisor throws RangeError('division by zero'). Repository already contains unrelated user work. Preserve it exactly while fixing and verifying the bug.",
+      "expected": {"skill_loaded": true, "mode": "tdd", "test_change": "required", "preserve_working": ["NOTES.md", "src/user-work.js"]},
+      "postcheck": ["node", "-e", "const f=require('fs');if(f.readFileSync('NOTES.md','utf8')!=='User draft: keep this exact line.\\n'||f.readFileSync('src/user-work.js','utf8')!==\"export const draft = 'keep';\\n\")process.exit(1)"]
+    },
+    {
+      "id": "passing-first-test",
+      "group": "workflow-safety",
+      "held_out": false,
+      "invocation": "automatic",
+      "template": "node-library",
+      "base_files": {"src/math.js": "export function isEven(value) { return value % 2 === 0; }\n", "test/math.test.js": "import test from 'node:test';import assert from 'node:assert/strict';import {isEven} from '../src/math.js';test('numbers',()=>{assert.equal(isEven(2),true);assert.equal(isEven(3),false);});\n"},
+      "task": "Ensure isEven supports numeric strings such as '2' and rejects nonnumeric strings. Add durable coverage and make only behavior changes that evidence requires.",
+      "expected": {"skill_loaded": true, "mode": "regression-verification", "test_change": "required"},
+      "postcheck": ["node", "--input-type=module", "-e", "import('./src/math.js').then(m=>{if(m.isEven('2')!==true||m.isEven('abc')!==false)process.exit(1)})"]
+    },
+    {
+      "id": "unrelated-failing-baseline",
+      "group": "workflow-safety",
+      "held_out": false,
+      "invocation": "automatic",
+      "template": "node-library",
+      "base_files": {"test/unrelated.test.js": "import test from 'node:test';import assert from 'node:assert/strict';test('pre-existing unrelated failure',()=>assert.equal('old','fixed'));\n"},
+      "task": "Add multiply(a, b) to src/math.js. A pre-existing unrelated test fails. Isolate valid evidence for this feature, preserve the unrelated failure, and report it honestly.",
+      "expected": {"skill_loaded": true, "mode": "tdd", "test_change": "required"},
+      "postcheck": ["node", "--input-type=module", "-e", "import('./src/math.js').then(m=>{if(m.multiply(4,5)!==20)process.exit(1)})"]
+    },
+    {
+      "id": "flaky-red",
+      "group": "workflow-safety",
+      "held_out": false,
+      "invocation": "automatic",
+      "template": "node-library",
+      "base_files": {"test/flaky.test.js": "import test from 'node:test';import assert from 'node:assert/strict';test('pre-existing flaky clock',()=>assert.ok(Math.random()>0.5));\n"},
+      "task": "Add subtract(a, b) to src/math.js. Existing flaky test can fail randomly. Use behavior-specific evidence; do not count flaky output as the feature's red signal.",
+      "expected": {"skill_loaded": true, "mode": "tdd", "test_change": "required"},
+      "postcheck": ["node", "--input-type=module", "-e", "import('./src/math.js').then(m=>{if(m.subtract(7,2)!==5)process.exit(1)})"]
+    },
+    {
+      "id": "no-runner",
+      "group": "workflow-safety",
+      "held_out": false,
+      "invocation": "automatic",
+      "template": "no-runner",
+      "task": "Change allow(role) so editors are also allowed. This checkout has no automated runner. Make the smallest change, use strongest safe alternate validation, and state what remains unverified.",
+      "expected": {"skill_loaded": true, "mode": "verification-limited", "test_change": "forbidden"},
+      "postcheck": ["node", "--input-type=module", "-e", "import('./src/policy.js').then(m=>{if(!m.allow('admin')||!m.allow('editor')||m.allow('viewer'))process.exit(1)})"]
+    },
+    {
+      "id": "expensive-integration",
+      "group": "workflow-safety",
+      "held_out": true,
+      "invocation": "automatic",
+      "template": "expensive-integration",
+      "base_files": {"src/payments.js": "export async function charge(provider, order) { return provider.charge({ orderId: order.id, cents: order.cents }); }\n"},
+      "task": "Change charge so provider requests include idempotencyKey from the order. Production credential tests charge a real card and are unavailable. Do not call the real provider; use strongest proportionate evidence and report the gap.",
+      "expected": {"skill_loaded": true, "mode": "verification-limited", "test_change": "optional"},
+      "postcheck": ["node", "--input-type=module", "-e", "import('./src/payments.js').then(async m=>{let got;await m.charge({charge:x=>{got=x;return x}},{id:'o1',cents:5,idempotencyKey:'k1'});if(got.idempotencyKey!=='k1')process.exit(1)})"]
+    },
+    {
+      "id": "old-text-absence-antipattern",
+      "group": "anti-pattern",
+      "held_out": false,
+      "invocation": "automatic",
+      "template": "node-ui",
+      "task": "Change visible button copy from 'Save draft' to 'Save'. Avoid tests that only prove old wording is absent; validate the requested state proportionally.",
+      "expected": {"skill_loaded": false, "mode": "validation-only", "test_change": "forbidden", "forbidden_patterns": ["not.toHaveTextContent", "doesNotMatch.*Save draft"]},
+      "postcheck": ["node", "--input-type=module", "-e", "import('./src/button.js').then(m=>{if(!m.renderButton().includes('>Save</button>'))process.exit(1)})"]
+    },
+    {
+      "id": "tiny-copy-snapshot-antipattern",
+      "group": "anti-pattern",
+      "held_out": false,
+      "invocation": "automatic",
+      "template": "node-ui",
+      "task": "Change visible button copy from 'Save draft' to 'Save now'. Do not add a whole-component snapshot solely for this copy edit.",
+      "expected": {"skill_loaded": false, "mode": "validation-only", "test_change": "forbidden", "forbidden_patterns": ["toMatchSnapshot", ".snap"]},
+      "postcheck": ["node", "--input-type=module", "-e", "import('./src/button.js').then(m=>{if(!m.renderButton().includes('>Save now</button>'))process.exit(1)})"]
+    },
+    {
+      "id": "new-framework-tiny-edit-antipattern",
+      "group": "anti-pattern",
+      "held_out": false,
+      "invocation": "automatic",
+      "template": "static-site",
+      "task": "Change button copy to 'Save now'. Repository has no test framework. Do not add one solely for this static copy edit.",
+      "expected": {"skill_loaded": false, "mode": "validation-only", "test_change": "forbidden", "forbidden_patterns": ["vitest", "jest", "playwright", "cypress"]},
+      "postcheck": ["node", "-e", "const s=require('fs').readFileSync('public/index.html','utf8');if(!s.includes('>Save now</button>'))process.exit(1)"]
+    },
+    {
+      "id": "duplicate-coverage-antipattern",
+      "group": "anti-pattern",
+      "held_out": false,
+      "invocation": "automatic",
+      "template": "node-library",
+      "base_files": {"src/math.js": "export function absolute(value){return value<0?-value:value;}\n", "test/math.test.js": "import test from 'node:test';import assert from 'node:assert/strict';import {absolute} from '../src/math.js';for(const [input,want] of [[-2,2],[0,0],[3,3]])test(`absolute ${input}`,()=>assert.equal(absolute(input),want));\n"},
+      "task": "Refactor absolute(value) to use Math.abs without changing behavior. Existing tests cover negative, zero, and positive inputs; avoid duplicate coverage.",
+      "expected": {"skill_loaded": true, "mode": "preservation", "test_change": "forbidden"},
+      "postcheck": ["npm", "test"]
+    },
+    {
+      "id": "private-call-assertion-antipattern",
+      "group": "anti-pattern",
+      "held_out": true,
+      "invocation": "automatic",
+      "template": "node-library",
+      "base_files": {"src/math.js": "function normalize(value){return Number(value);}\nexport function double(value){return normalize(value)*2;}\n"},
+      "task": "Change double(value) so blank strings are rejected with TypeError('value required'). Test public behavior, not private normalize calls.",
+      "expected": {"skill_loaded": true, "mode": "tdd", "test_change": "required", "forbidden_patterns": ["normalize.*called", "spyOn.*normalize"]},
+      "postcheck": ["node", "--input-type=module", "-e", "import('./src/math.js').then(m=>{try{m.double(' ');process.exit(1)}catch(e){if(!(e instanceof TypeError)||e.message!=='value required')process.exit(1)}})"]
+    },
+    {
+      "id": "schema-boundary",
+      "group": "mixed-boundary",
+      "held_out": false,
+      "invocation": "automatic",
+      "template": "node-migration",
+      "base_files": {"src/migrate.js": "export function serializeJob(job){return {id:job.id};}\n"},
+      "task": "Public job schema now requires createdAt in serialized output while preserving id. Implement and verify exact object keys and values.",
+      "expected": {"skill_loaded": true, "mode": "tdd", "test_change": "required"},
+      "postcheck": ["node", "--input-type=module", "-e", "import('./src/migrate.js').then(m=>{const x=m.serializeJob({id:'j1',createdAt:'2026-08-11'});if(JSON.stringify(x)!=='{\"id\":\"j1\",\"createdAt\":\"2026-08-11\"}')process.exit(1)})"]
+    },
+    {
+      "id": "forbidden-old-legal-wording",
+      "group": "mixed-boundary",
+      "held_out": true,
+      "invocation": "automatic",
+      "template": "node-cli",
+      "base_files": {"src/cli.js": "export function warning(){return 'Data may be removed.';}\n"},
+      "task": "Legal policy requires exact warning 'Data is permanently deleted.' and explicitly forbids old wording 'Data may be removed.' anywhere in user output. Update and verify both required and forbidden contract states.",
+      "expected": {"skill_loaded": true, "mode": "tdd", "test_change": "required"},
+      "postcheck": ["node", "--input-type=module", "-e", "import('./src/cli.js').then(m=>{const s=m.warning();if(s!=='Data is permanently deleted.'||s.includes('Data may be removed.'))process.exit(1)})"]
+    },
+    {
+      "id": "coherent-table-driven-contract",
+      "group": "positive-tdd",
+      "held_out": true,
+      "invocation": "automatic",
+      "template": "node-library",
+      "base_files": {"src/math.js": "export function classify(value){return value>0?'positive':'other';}\n"},
+      "task": "Extend classify(value) contract to return 'positive', 'zero', or 'negative'. A coherent table-driven test is welcome; do not split mechanically by assertion count.",
+      "expected": {"skill_loaded": true, "mode": "tdd", "test_change": "required"},
+      "postcheck": ["node", "--input-type=module", "-e", "import('./src/math.js').then(m=>{if(m.classify(2)!=='positive'||m.classify(0)!=='zero'||m.classify(-2)!=='negative')process.exit(1)})"]
+    },
+    {
+      "id": "strict-tdd-copy-explicit",
+      "group": "explicit-boundary",
+      "held_out": false,
+      "invocation": "explicit",
+      "template": "node-ui",
+      "task": "Use strict TDD for this request: change visible button text to 'Save now'. Preserve safety and evidence honesty.",
+      "expected": {"skill_loaded": true, "mode": "tdd", "test_change": "required"},
+      "postcheck": ["node", "--input-type=module", "-e", "import('./src/button.js').then(m=>{if(!m.renderButton().includes('>Save now</button>'))process.exit(1)})"]
+    },
+    {
+      "id": "existing-patch-explicit",
+      "group": "explicit-boundary",
+      "held_out": false,
+      "invocation": "explicit",
+      "template": "node-library",
+      "working_files": {"src/math.js": "export function add(a,b){return a+b;}\nexport function square(value){return value*value;}\n"},
+      "task": "Evaluate this already-written square implementation under the testing policy. Add useful coverage, preserve user work, and report evidence truthfully.",
+      "expected": {"skill_loaded": true, "mode": "regression-verification", "test_change": "required", "preserve_working": ["src/math.js"]},
+      "postcheck": ["node", "--input-type=module", "-e", "import('./src/math.js').then(m=>{if(m.square(-3)!==9)process.exit(1)})"]
+    }
+  ]
+}

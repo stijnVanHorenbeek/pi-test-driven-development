@@ -1,0 +1,71 @@
+import type { EvaluationCase, ExpectedMode } from "./spec.ts";
+
+interface PostcheckResult {
+  exitCode: number | null;
+  stdout: string;
+  stderr: string;
+}
+
+interface OutcomeInput {
+  expected: EvaluationCase["expected"];
+  changedPaths: string[];
+  diff: string;
+  postcheck: PostcheckResult;
+  preservedWorking: Record<string, boolean>;
+  observedMode: ExpectedMode | null;
+  observedLabel?: "tdd-attested" | "regression-verified" | "preservation-verified" | "validation-only" | "verification-limited" | null;
+}
+
+function isTestPath(path: string) {
+  const normalized = path.replaceAll("\\", "/").toLowerCase();
+  return /(^|\/)(test|tests|spec|specs|__tests__)(\/|$)/.test(normalized)
+    || /\.(test|spec)\.[a-z0-9]+$/.test(normalized)
+    || normalized.endsWith(".snap");
+}
+
+export function scoreOutcome(input: OutcomeInput) {
+  const testChanged = input.changedPaths.some(isTestPath);
+  const testChangePassed = input.expected.test_change === "required"
+    ? testChanged
+    : input.expected.test_change === "forbidden"
+      ? !testChanged
+      : true;
+  const forbiddenHits: string[] = [];
+  for (const pattern of input.expected.forbidden_patterns ?? []) {
+    if (new RegExp(pattern, "i").test(`${input.diff}\n${input.changedPaths.join("\n")}`)) forbiddenHits.push(pattern);
+  }
+  const forbiddenPatternsPassed = forbiddenHits.length === 0;
+  const artifactPassed = input.postcheck.exitCode === 0;
+  const userWorkPassed = Object.values(input.preservedWorking).every(Boolean);
+  const modePassed = input.expected.skill_loaded
+    ? input.observedMode === null ? null : input.observedMode === input.expected.mode
+    : null;
+  const expectedLabel = {
+    tdd: "tdd-attested",
+    "regression-verification": "regression-verified",
+    preservation: "preservation-verified",
+    "validation-only": "validation-only",
+    "verification-limited": "verification-limited",
+  }[input.expected.mode];
+  const labelPassed = input.expected.skill_loaded
+    ? input.observedLabel == null ? null : input.observedLabel === expectedLabel
+    : null;
+  const supported = !input.expected.skill_loaded || (modePassed !== null && labelPassed !== null);
+  return {
+    passed: artifactPassed && testChangePassed && forbiddenPatternsPassed && userWorkPassed && modePassed !== false && labelPassed !== false,
+    supported,
+    artifactPassed,
+    testChanged,
+    testChangePassed,
+    forbiddenPatternsPassed,
+    forbiddenHits,
+    userWorkPassed,
+    modePassed,
+    expectedMode: input.expected.mode,
+    observedMode: input.observedMode,
+    expectedLabel,
+    observedLabel: input.observedLabel ?? null,
+    labelPassed,
+    postcheck: input.postcheck,
+  };
+}

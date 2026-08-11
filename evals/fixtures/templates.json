@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "templates": {
+    "node-library": {
+      "production_globs": ["src/**"],
+      "test_globs": ["test/**", "tests/**", "**/*.test.js", "**/*.test.mjs"],
+      "base_files": {
+        "package.json": "{\n  \"name\": \"fixture-node-library\",\n  \"private\": true,\n  \"type\": \"module\",\n  \"scripts\": {\"test\": \"node --test\"}\n}\n",
+        "src/math.js": "export function add(a, b) {\n  return a + b;\n}\n",
+        "test/math.test.js": "import test from 'node:test';\nimport assert from 'node:assert/strict';\nimport { add } from '../src/math.js';\n\ntest('adds two numbers', () => {\n  assert.equal(add(2, 3), 5);\n});\n"
+      }
+    },
+    "node-cli": {
+      "production_globs": ["src/**"],
+      "test_globs": ["test/**", "tests/**", "**/*.test.js", "**/*.test.mjs"],
+      "base_files": {
+        "package.json": "{\n  \"name\": \"fixture-node-cli\",\n  \"private\": true,\n  \"type\": \"module\",\n  \"scripts\": {\"test\": \"node --test\"}\n}\n",
+        "src/cli.js": "export function formatStatus(status) {\n  return `status=${status}`;\n}\n",
+        "test/cli.test.js": "import test from 'node:test';\nimport assert from 'node:assert/strict';\nimport { formatStatus } from '../src/cli.js';\n\ntest('formats status', () => {\n  assert.equal(formatStatus('ready'), 'status=ready');\n});\n"
+      }
+    },
+    "node-ui": {
+      "production_globs": ["src/**", "styles/**"],
+      "test_globs": ["test/**", "tests/**", "**/*.test.js", "**/*.test.mjs", "**/*.snap"],
+      "base_files": {
+        "package.json": "{\n  \"name\": \"fixture-node-ui\",\n  \"private\": true,\n  \"type\": \"module\",\n  \"scripts\": {\"test\": \"node --test\", \"check\": \"node --check src/button.js\"}\n}\n",
+        "src/button.js": "export function renderButton() {\n  return '<button class=\"save\">Save draft</button>';\n}\n",
+        "styles/button.css": ".save {\n  color: #222;\n}\n",
+        "test/button.test.js": "import test from 'node:test';\nimport assert from 'node:assert/strict';\nimport { renderButton } from '../src/button.js';\n\ntest('renders a button', () => {\n  assert.match(renderButton(), /^<button/);\n});\n"
+      }
+    },
+    "node-migration": {
+      "production_globs": ["src/**"],
+      "test_globs": ["test/**", "tests/**", "**/*.test.js", "**/*.test.mjs"],
+      "base_files": {
+        "package.json": "{\n  \"name\": \"fixture-node-migration\",\n  \"private\": true,\n  \"type\": \"module\",\n  \"scripts\": {\"test\": \"node --test\"}\n}\n",
+        "src/migrate.js": "export function migrateProfile(profile) {\n  return { ...profile };\n}\n",
+        "test/migrate.test.js": "import test from 'node:test';\nimport assert from 'node:assert/strict';\nimport { migrateProfile } from '../src/migrate.js';\n\ntest('preserves profile id', () => {\n  assert.equal(migrateProfile({ id: 'p1' }).id, 'p1');\n});\n"
+      }
+    },
+    "node-config": {
+      "production_globs": ["src/**", "config/**", "package.json"],
+      "test_globs": ["test/**", "tests/**", "**/*.test.js", "**/*.test.mjs"],
+      "base_files": {
+        "package.json": "{\n  \"name\": \"fixture-node-config\",\n  \"private\": true,\n  \"type\": \"module\",\n  \"scripts\": {\"test\": \"node --test\", \"check\": \"node --check src/config.js\"}\n}\n",
+        "config/defaults.json": "{\"retryLimit\": 2}\n",
+        "src/config.js": "import defaults from '../config/defaults.json' with { type: 'json' };\n\nexport function retryLimit(env = {}) {\n  return Number(env.RETRY_LIMIT ?? defaults.retryLimit);\n}\n",
+        "test/config.test.js": "import test from 'node:test';\nimport assert from 'node:assert/strict';\nimport { retryLimit } from '../src/config.js';\n\ntest('uses configured default retry limit', () => {\n  assert.equal(retryLimit({}), 2);\n});\n"
+      }
+    },
+    "static-site": {
+      "production_globs": ["public/**", "styles/**"],
+      "test_globs": ["test/**", "tests/**", "**/*.test.*", "**/*.snap"],
+      "base_files": {
+        "package.json": "{\n  \"name\": \"fixture-static-site\",\n  \"private\": true,\n  \"scripts\": {\"check\": \"node scripts/check.mjs\"}\n}\n",
+        "public/index.html": "<!doctype html>\n<button class=\"save\">Save draft</button>\n",
+        "styles/site.css": ".save { color: #222; }\n",
+        "scripts/check.mjs": "import { readFileSync } from 'node:fs';\nconst html = readFileSync('public/index.html', 'utf8');\nif (!html.includes('<button')) process.exit(1);\n"
+      }
+    },
+    "docs-only": {
+      "production_globs": [],
+      "test_globs": ["test/**", "tests/**", "**/*.test.*"],
+      "base_files": {
+        "README.md": "# Fixture\n\nRun `npm test` to check the project.\n",
+        "src/example.js": "// Parse input.\nexport const value = 1;\n"
+      }
+    },
+    "generated-vendor": {
+      "production_globs": ["generated/**", "vendor/**"],
+      "test_globs": ["test/**", "tests/**", "**/*.test.*"],
+      "base_files": {
+        "schema/source.json": "{\"name\":\"Widget\"}\n",
+        "generated/client.js": "// generated; do not edit\nexport const model = 'Widget';\n",
+        "vendor/NOTICE.txt": "Vendored dependency notice.\n",
+        "scripts/generate.mjs": "import { readFileSync, writeFileSync } from 'node:fs';\nconst value = JSON.parse(readFileSync('schema/source.json', 'utf8'));\nwriteFileSync('generated/client.js', `// generated; do not edit\\nexport const model = '${value.name}';\\n`);\n"
+      }
+    },
+    "no-runner": {
+      "production_globs": ["src/**"],
+      "test_globs": ["test/**", "tests/**", "**/*.test.*"],
+      "base_files": {
+        "src/policy.js": "export function allow(role) {\n  return role === 'admin';\n}\n",
+        "README.md": "# Legacy fixture\n\nNo automated test runner is available in this checkout.\n"
+      }
+    },
+    "expensive-integration": {
+      "production_globs": ["src/**"],
+      "test_globs": ["test/**", "tests/**", "**/*.test.*"],
+      "base_files": {
+        "package.json": "{\n  \"name\": \"fixture-expensive-integration\",\n  \"private\": true,\n  \"type\": \"module\"\n}\n",
+        "src/payments.js": "export function paymentPayload(order) {\n  return { orderId: order.id, cents: order.cents };\n}\n",
+        "README.md": "# Payment fixture\n\nEnd-to-end checks require production credentials and charge a real card. Do not run them.\n"
+      }
+    }
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "name": "pi-test-driven-development",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Risk-based TDD skill and advisory testing tools for Pi",
+  "keywords": [
+    "pi-package",
+    "pi-skill",
+    "pi-extension",
+    "test-driven-development",
+    "testing"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.19.0"
+  },
+  "scripts": {
+    "test": "tsx --test tests/*.test.ts",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run typecheck && npm test",
+    "eval": "tsx evals/run-evals.ts",
+    "eval:report": "tsx evals/run-evals.ts --report-only"
+  },
+  "files": [
+    "docs",
+    "extensions",
+    "skills",
+    "README.md",
+    "LICENSE"
+  ],
+  "peerDependencies": {
+    "@earendil-works/pi-ai": "*",
+    "@earendil-works/pi-coding-agent": "*",
+    "typebox": "*"
+  },
+  "devDependencies": {
+    "@earendil-works/pi-ai": "^0.84.1",
+    "@earendil-works/pi-coding-agent": "^0.84.1",
+    "@types/node": "^26.2.0",
+    "tsx": "^4.23.12",
+    "typebox": "^1.3.12",
+    "typescript": "^7.0.2"
+  },
+  "pi": {
+    "extensions": [
+      "./extensions/test-advisor.ts"
+    ],
+    "skills": [
+      "./skills"
+    ]
+  }
+}
