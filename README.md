@@ -4,7 +4,7 @@ This skill-only package defines a risk-based testing policy for [Pi](https://pi.
 
 The package registers no custom tools or extension hooks. The agent uses Pi's built-in repository tools directly.
 
-Version 0.1.0 is a release candidate. Full V1 matrix qualification is required before publication to npm `latest`.
+Version 0.1.0 is the initial release. Full V1 matrix qualification remains incomplete; see Evidence status below.
 
 ## Policy
 
