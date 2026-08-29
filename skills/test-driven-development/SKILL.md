@@ -1,13 +1,14 @@
 ---
 name: test-driven-development
 description: >-
-  Auto-use when main task implements or changes observable production behavior, fixes a reproducible
-  bug, or refactors production source while preserving behavior. Load before production edits to
-  choose TDD, preservation, or proportionate validation. Do not auto-use for review/explanation,
-  test-result interpretation, code already written, test-only work, docs/comments, generated/vendor
-  output, or ordinary copy/style/format changes. Contractual copy, runtime config, schemas,
-  migrations, and build behavior still qualify when observable risk changes. Explicit invocation
-  may evaluate excluded cases. Never discard pre-existing/user work or claim unobserved evidence.
+  Auto-use before production edits when the task changes observable production behavior, fixes a reproducible
+  bug, or preserves behavior during a refactor. Route work to TDD, regression verification,
+  preservation, or proportionate validation. Auto-use excludes review/explanation, test-result
+  interpretation, test-only work, docs/comments, generated/vendor output, ordinary copy/style/format
+  changes, and tasks whose requested production change is already complete. Contractual copy,
+  runtime config, schemas, migrations, and build behavior still qualify when observable risk changes.
+  Explicit invocation may evaluate excluded cases. Preserve pre-existing/user work and report only
+  observed evidence.
 license: MIT
 ---
 
@@ -47,24 +48,23 @@ or live validation. Do not add a framework or snapshot merely to prove an edit o
 | Situation | Mode | Evidence label |
 |---|---|---|
 | New/changed observable behavior or reproducible bug; useful automation feasible | TDD | `tdd-attested` |
-| Implementation or incoming patch already exists | Regression verification | `regression-verified` |
+| Implementation or incoming patch existed before this run | Regression verification | `regression-verified` |
 | Pure refactor/internal restructuring | Preservation | `preservation-verified` |
 | No worthwhile new permanent test | Validation-only | `validation-only` |
 | Verification unavailable, unsafe, flaky, infeasible, or disproportionate | Verification-limited | `verification-limited` |
 
-Defaults:
+Routing edges:
 
-- Behavior or bug: desired behavior test first; valid red; coherent minimal green; relevant checks.
-- Refactor: green baseline, then green preservation checks. No artificial red.
-- Existing code/user patch: preserve it; add useful regression coverage if warranted. Do not claim TDD.
-- Ordinary static copy/style/format: usually no new test. Inspect artifact and run proportionate checks.
-- Accessibility names, legal/safety text, localization, parser/CLI/API/error output: test stable
-  user-facing contract when importance justifies maintenance.
-- Config/schema/migration/dependency/build: prefer direct validation unless external behavior changes.
-- Explicit strict-TDD request can override default no-test routing, never safety or evidence honesty.
+- Ordinary static copy/style/format usually needs artifact inspection and proportionate existing checks,
+  not a new test.
+- Accessibility names, legal/safety text, localization, parser/CLI/API/error output can be stable
+  user-facing contracts worth testing.
+- Config/schema/migration/dependency/build changes usually need direct validation unless external
+  behavior changes.
+- Explicit strict-TDD requests can override default no-test routing, never safety or evidence honesty.
 
-A test may contain coherent table cases or multiple related assertions for one contract. “One test
-per behavior” is scope guidance, not assertion-count law.
+A test can contain coherent table cases or multiple related assertions for one contract. “One test
+per behavior” guides scope, not assertion count.
 
 ## Valid evidence
 
@@ -78,20 +78,16 @@ cannot establish enough confidence, use strongest safe alternative and state res
 Completion should name exact focused command, expected/observed red reason when applicable,
 green/validation results, broader commands, pre-existing failures, and residual risk. Final diff cannot prove order.
 
-## Built-in tool workflow
+## Evidence workflow
 
-Use Pi's built-in tools directly:
+Inspect repository state and repository-native commands before choosing scope or runner. Before a red
+run, state the expected behavior failure. Run focused and broader evidence commands separately, and
+preserve their status instead of masking failures with `|| true` or unrelated shell composition.
 
-- Inspect repository status, docs, manifests, scripts, CI config, and existing tests with `read` and
-  read-only `bash` commands before choosing scope or runner.
-- State expected red reason before execution, then run exact focused and broader commands with `bash`.
-  Keep evidence commands separate; never mask status with `|| true` or unrelated shell composition.
-- Make visible source changes with `edit` or `write`; preserve unrelated dirty paths.
-- Judge failures semantically. Exit status and matching text cannot promote setup, syntax, flaky, or
-  unrelated failures into valid red evidence.
-
-Report observed commands/results, pre-existing failures, and residual risk, then end with
-`Evidence: <label>` using strongest supported label. Built-in output is evidence; prose is not.
+Judge failures semantically. Exit status and matching text cannot promote setup, syntax, flaky, or
+unrelated failures into valid red evidence. Report observed commands/results, pre-existing failures,
+and residual risk, then end with `Evidence: <label>` using the strongest supported label. Built-in
+command output is evidence; prose is not.
 
 ## Load references narrowly
 

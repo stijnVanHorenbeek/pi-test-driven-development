@@ -1,10 +1,12 @@
 # pi-test-driven-development
 
+[![npm version](https://img.shields.io/npm/v/pi-test-driven-development.svg)](https://www.npmjs.com/package/pi-test-driven-development)
+
 This skill-only package defines a risk-based testing policy for [Pi](https://pi.dev). The skill applies TDD to valuable checks of observable behavior, preserves existing and user work, supports pure-refactor baselines, and avoids permanent tests that only prove an edit occurred.
 
 The package registers no custom tools or extension hooks. The agent uses Pi's built-in repository tools directly.
 
-Version 0.1.1 is the current release. Full V1 matrix qualification remains incomplete; see Evidence status below.
+Full V1 matrix qualification remains incomplete; see Evidence status below.
 
 ## Policy
 
@@ -21,7 +23,7 @@ Before adding a permanent test:
 | Situation | Mode | Evidence label |
 |---|---|---|
 | New/changed observable behavior or reproducible bug | TDD | `tdd-attested` |
-| Code or incoming patch already exists | Regression verification | `regression-verified` |
+| Code or incoming patch existed before the run | Regression verification | `regression-verified` |
 | Pure internal refactor | Preservation | `preservation-verified` |
 | No worthwhile permanent test | Validation-only | `validation-only` |
 | Safe/reliable automation unavailable | Verification-limited | `verification-limited` |
@@ -53,7 +55,7 @@ The agent evaluates failures directly and reports observed commands, results, re
 
 When skill discovery is enabled, Pi includes the skill name and description in the system prompt. The model should load the skill when the main task asks it to implement or change observable production behavior, fix a reproducible bug, or refactor production source.
 
-By default, the skill excludes review or explanation only, test-result interpretation, code already written, test-only work, docs or comments only, generated or vendor output, and ordinary copy, style, or formatting edits.
+By default, the skill excludes review or explanation, test-result interpretation, test-only work, docs or comments, generated or vendor output, ordinary copy, style, or formatting edits, and tasks whose requested production change is already complete.
 
 Contractual copy—accessibility names, legal or safety wording, localization, and CLI, API, parser, or error output—can still qualify when stable observable risk changes.
 
@@ -74,13 +76,13 @@ Review the package contents before installation. The package ships Markdown skil
 After release, install from npm:
 
 ```bash
-pi install npm:pi-test-driven-development@0.1.0
+pi install npm:pi-test-driven-development
 ```
 
-After tag publication, install from the pinned GitHub release:
+After tag publication, install from a pinned GitHub release (replace `vX.Y.Z` with the latest release):
 
 ```bash
-pi install git:github.com/stijnVanHorenbeek/pi-test-driven-development@v0.1.0
+pi install git:github.com/stijnVanHorenbeek/pi-test-driven-development@vX.Y.Z
 ```
 
 For local development, install globally from an absolute path:

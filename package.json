@@ -1,6 +1,6 @@
 {
   "name": "pi-test-driven-development",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": false,
   "type": "module",
   "description": "Risk-based test-driven development skill for Pi",

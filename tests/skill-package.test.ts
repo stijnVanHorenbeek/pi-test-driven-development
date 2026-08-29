@@ -30,9 +30,9 @@ test("skill frontmatter is valid, bounded, and routes both positive and negative
   assert.match(description, /observable production behavior/i);
   assert.match(description, /reproducible bug/i);
   assert.match(description, /refactor/i);
-  assert.match(description, /do not auto-use/i);
+  assert.match(description, /auto-use excludes/i);
   assert.match(description, /ordinary copy|style|format/i);
-  assert.match(description, /code already written|already-written|pre-existing/i);
+  assert.match(description, /requested production change is already complete|pre-existing/i);
 });
 
 test("hot skill stays lean and links one-level progressive references", async () => {
@@ -61,8 +61,8 @@ test("critical safety and evidence concepts are explicit without source-text rit
   for (const label of ["tdd-attested", "regression-verified", "preservation-verified", "validation-only", "verification-limited"]) {
     assert.ok(text.includes(label), label);
   }
-  assert.match(text, /built-in/i);
-  assert.match(text, /`read`/);
-  assert.match(text, /`bash`/);
+  assert.match(text, /evidence commands separately/i);
+  assert.match(text, /masking failures/i);
+  assert.match(text, /judge failures semantically/i);
   assert.doesNotMatch(text, /test_(?:context|policy|run|status)/);
 });
