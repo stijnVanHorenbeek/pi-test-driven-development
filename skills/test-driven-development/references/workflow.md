@@ -43,7 +43,8 @@ Improve names, duplication, and structure only while green. Do not mix new behav
 
 Use `tdd-attested` only with observed valid red before production mutation and observed green after it. Record command, expected and actual red reason, green result, broader checks, pre-existing failures, and residual risk.
 
-Use built-in `read` and read-only `bash` to inspect repository-native commands. Preserve exact command output needed to report strongest supported evidence label truthfully.
+Preserve exact command output for the behavior covered. For mixed work, follow the skill's scoped
+reporting rule; this contract's red/green evidence does not attest unrelated changes.
 
 ## Test list, not test quota
 

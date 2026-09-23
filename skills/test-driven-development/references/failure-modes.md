@@ -28,6 +28,11 @@ Use focused command that isolates changed contract. Do not silently fix or suppr
 
 Do not add framework automatically. Inspect repository docs, manifests, scripts, and CI config with built-in `read` or read-only `bash`. Use strongest safe alternative: typecheck, build, lint, parser/schema validation, direct pure-function probe, rendered inspection, manual user flow, or dry run.
 
+Judge whether the alternative proves the needed contract, not whether it is automated. Rendered
+inspection can sufficiently validate static copy; lint alone cannot verify payment-provider behavior.
+Use validation-only when proportionate evidence is complete and no new permanent test earns its
+place; use verification-limited when material confidence is still missing.
+
 ## Unsafe or expensive environment
 
 Never trigger real charges, production mutations, destructive migrations, external emails, or credentials merely for red/green ritual. Test lower safe boundary if it proves contract. Otherwise use verification-limited evidence and name missing integration confidence.

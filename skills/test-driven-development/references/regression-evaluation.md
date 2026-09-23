@@ -1,6 +1,9 @@
 # Regression verification and existing work
 
-Use when implementation, incoming patch, spike, generated candidate, or user work already exists before test evidence.
+Use when the requested behavior is already implemented before this run, including in an incoming
+patch, spike, generated candidate, or user work. Existing source alone is not a reason to skip TDD.
+For an incomplete or broken patch, verify implemented behavior and drive the remaining delta with
+valid red when valuable and feasible, preserving unrelated work.
 
 ## Preserve tree
 
@@ -15,7 +18,8 @@ Tests added after implementation can still be valuable. They are regression veri
 3. Check existing coverage for same contract.
 4. Add focused regression coverage only when confidence justifies maintenance cost.
 5. Run focused and relevant broader checks.
-6. Report `regression-verified`, not `tdd-attested`.
+6. Report `regression-verified` for verified existing behavior, not `tdd-attested`. Label any remaining
+   delta separately according to its observed evidence.
 
 Passing-first test can indicate implementation already satisfies desired behavior. Confirm test is discriminating and actually ran. If useful, keep as regression coverage. Do not weaken test merely to create red.
 

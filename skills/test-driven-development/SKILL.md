@@ -45,13 +45,19 @@ or live validation. Do not add a framework or snapshot merely to prove an edit o
 
 ## Select mode
 
+Route per requested contract, not per file. A fix or feature in existing code still uses TDD when
+valuable and feasible; regression verification covers already-implemented requested behavior.
+
 | Situation | Mode | Evidence label |
 |---|---|---|
 | New/changed observable behavior or reproducible bug; useful automation feasible | TDD | `tdd-attested` |
-| Implementation or incoming patch existed before this run | Regression verification | `regression-verified` |
+| Requested behavior already implemented before this run | Regression verification | `regression-verified` |
 | Pure refactor/internal restructuring | Preservation | `preservation-verified` |
-| No worthwhile new permanent test | Validation-only | `validation-only` |
-| Verification unavailable, unsafe, flaky, infeasible, or disproportionate | Verification-limited | `verification-limited` |
+| No worthwhile new permanent test; proportionate checks complete | Validation-only | `validation-only` |
+| Material verification gap remains after safe attempts | Verification-limited | `verification-limited` |
+
+Manual, rendered, static, or existing automated checks can suffice. A missing runner alone does
+not limit verification; an unperformed necessary check does.
 
 Routing edges:
 
@@ -75,9 +81,6 @@ Green means focused behavior check passes, relevant surrounding checks pass, and
 are not hidden. For preservation, both baseline and post-change checks stay green. When automation
 cannot establish enough confidence, use strongest safe alternative and state residual risk.
 
-Completion should name exact focused command, expected/observed red reason when applicable,
-green/validation results, broader commands, pre-existing failures, and residual risk. Final diff cannot prove order.
-
 ## Evidence workflow
 
 Inspect repository state and repository-native commands before choosing scope or runner. Before a red
@@ -85,9 +88,13 @@ run, state the expected behavior failure. Run focused and broader evidence comma
 preserve their status instead of masking failures with `|| true` or unrelated shell composition.
 
 Judge failures semantically. Exit status and matching text cannot promote setup, syntax, flaky, or
-unrelated failures into valid red evidence. Report observed commands/results, pre-existing failures,
-and residual risk, then end with `Evidence: <label>` using the strongest supported label. Built-in
-command output is evidence; prose is not.
+unrelated failures into valid red evidence. Report exact focused/broader commands and results,
+expected/observed red reason when applicable, pre-existing failures, and residual risk.
+Final diff cannot prove order; prose cannot replace tool evidence.
+
+End with `Evidence: <label>` for a single scope. For mixed work, use `Evidence: <label> — <scope>`
+per independent contract. Labels describe evidence, not a ranking: one successful scope
+cannot cover another's gap. Mark each materially unverified scope `verification-limited`.
 
 ## Load references narrowly
 

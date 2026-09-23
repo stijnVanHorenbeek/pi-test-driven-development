@@ -1,12 +1,8 @@
 {
-  "schema_version": 1,
-  "preregistered_at": "2026-08-11",
-  "note": "Prompts and labels fixed before skill implementation. Held-out cases are excluded from prompt-tuning runs.",
   "cases": [
     {
       "id": "logic-feature",
       "group": "positive-tdd",
-      "held_out": false,
       "invocation": "automatic",
       "template": "node-library",
       "task": "Add an exported multiply(a, b) function in src/math.js. It must return the product for positive, negative, and zero operands. Implement the change and verify it.",
@@ -14,9 +10,26 @@
       "postcheck": ["node", "--input-type=module", "-e", "import('./src/math.js').then(m=>{if(m.multiply(3,-2)!==-6||m.multiply(8,0)!==0)process.exit(1)})"]
     },
     {
+      "id": "dotnet-clamp-bug",
+      "group": "positive-tdd",
+      "invocation": "automatic",
+      "template": "dotnet-library",
+      "task": "Fix Calculator.Clamp(value, min, max): values outside the bounds currently pass through unchanged. Clamp them to the nearest bound while preserving in-range values. Reproduce the bug with the existing xUnit project, fix it, and verify nearby behavior.",
+      "expected": {"skill_loaded": true, "mode": "tdd", "test_change": "required", "red_output_pattern": "Clamp|Expected|Actual", "allowed_changed_paths": ["src/Calculator.cs", "tests/CalculatorTests.cs"]},
+      "postcheck": ["sh", "-c", "set -eu\nscratch=$(mktemp -d)\ntrap 'rm -rf \"$scratch\"' EXIT\nprintf '<Project Sdk=\"Microsoft.NET.Sdk\"><PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework></PropertyGroup><ItemGroup><ProjectReference Include=\"%s/src/Calculator.csproj\" /></ItemGroup></Project>\\n' \"$PWD\" > \"$scratch/Oracle.csproj\"\ncat > \"$scratch/Program.cs\" <<'CS'\nusing System;\nusing Fixture;\nif (Calculator.Clamp(-2, 0, 5) != 0 || Calculator.Clamp(9, 0, 5) != 5 || Calculator.Clamp(2, 0, 5) != 2) Environment.Exit(1);\nCS\ndotnet run --project \"$scratch/Oracle.csproj\"" ]
+    },
+    {
+      "id": "dotnet-nullable-metadata",
+      "group": "no-new-test",
+      "invocation": "automatic",
+      "template": "dotnet-library",
+      "task": "Enable nullable reference type analysis in src/Calculator.csproj without changing runtime behavior or adding tests. Validate the project with dotnet build.",
+      "expected": {"skill_loaded": true, "mode": "validation-only", "test_change": "forbidden", "allowed_changed_paths": ["src/Calculator.csproj"]},
+      "postcheck": ["sh", "-c", "set -eu\nnode -e \"const s=require('fs').readFileSync('src/Calculator.csproj','utf8');if(!/<Nullable>\\s*enable\\s*<\\/Nullable>/.test(s))process.exit(1)\"\ndotnet build src/Calculator.csproj" ]
+    },
+    {
       "id": "reproducible-bug",
       "group": "positive-tdd",
-      "held_out": false,
       "invocation": "automatic",
       "template": "node-library",
       "base_files": {
@@ -30,7 +43,6 @@
     {
       "id": "cli-contract",
       "group": "positive-tdd",
-      "held_out": false,
       "invocation": "automatic",
       "template": "node-cli",
       "task": "Extend formatStatus(status, options) so options.json === true returns exactly JSON.stringify({ status }) while existing text output stays unchanged. Implement and verify this CLI output contract.",
@@ -40,7 +52,6 @@
     {
       "id": "migration-transformation",
       "group": "positive-tdd",
-      "held_out": false,
       "invocation": "automatic",
       "template": "node-migration",
       "task": "Update migrateProfile(profile) so legacy timeout seconds become timeoutMs milliseconds, the old timeout key is removed, and every unrelated field is preserved. Implement and verify the migration transformation.",
@@ -50,7 +61,6 @@
     {
       "id": "interaction-state-change",
       "group": "positive-tdd",
-      "held_out": false,
       "invocation": "automatic",
       "template": "node-ui",
       "base_files": {"src/disclosure.js": "export function nextExpanded(current) { return current; }\n"},
@@ -61,7 +71,6 @@
     {
       "id": "python-clamp-feature",
       "group": "positive-tdd",
-      "held_out": true,
       "invocation": "automatic",
       "template": "python-library",
       "task": "Change clamp(value, low, high) so values below low return low and values above high return high while in-range values remain unchanged. Use the repository's unittest runner and verify all three behaviors.",
@@ -71,7 +80,6 @@
     {
       "id": "ordinary-button-copy",
       "group": "no-new-test",
-      "held_out": false,
       "invocation": "automatic",
       "template": "static-site",
       "task": "Change button text in public/index.html from 'Save draft' to 'Save'. Make only the needed copy edit and validate it proportionally.",
@@ -81,7 +89,6 @@
     {
       "id": "punctuation-typo",
       "group": "no-new-test",
-      "held_out": false,
       "invocation": "automatic",
       "template": "static-site",
       "base_files": {"public/index.html": "<!doctype html>\n<p>Changes saved..</p>\n"},
@@ -92,7 +99,6 @@
     {
       "id": "css-only-tweak",
       "group": "no-new-test",
-      "held_out": false,
       "invocation": "automatic",
       "template": "static-site",
       "task": "Change .save text color in styles/site.css from #222 to #111. No markup or behavior changes.",
@@ -102,7 +108,6 @@
     {
       "id": "docs-comment-only",
       "group": "no-new-test",
-      "held_out": false,
       "invocation": "automatic",
       "template": "docs-only",
       "task": "Correct README command from `npm test` to `npm run test` and change the source comment to 'Parse one input value.' No runtime code changes.",
@@ -112,7 +117,6 @@
     {
       "id": "generated-vendor-output",
       "group": "no-new-test",
-      "held_out": false,
       "invocation": "automatic",
       "template": "generated-vendor",
       "task": "Change schema/source.json model name from Widget to Gadget, then regenerate generated/client.js with the repository generator. Do not edit vendor content.",
@@ -122,7 +126,6 @@
     {
       "id": "dependency-metadata-sufficient-checks",
       "group": "no-new-test",
-      "held_out": false,
       "invocation": "automatic",
       "template": "node-config",
       "task": "Add package.json engines metadata requiring Node >=22. Existing check and test scripts are sufficient; update metadata and run relevant existing checks.",
@@ -132,7 +135,6 @@
     {
       "id": "go-toolchain-metadata",
       "group": "no-new-test",
-      "held_out": true,
       "invocation": "automatic",
       "template": "go-module",
       "task": "Raise the module's minimum Go toolchain declaration from 1.22 to 1.23. This changes the supported build environment, not runtime behavior. Update go.mod and validate it with Go's module tooling.",
@@ -142,17 +144,15 @@
     {
       "id": "test-only-change",
       "group": "no-new-test",
-      "held_out": false,
       "invocation": "automatic",
       "template": "node-library",
       "task": "Add a test case showing add(-2, -3) returns -5. Do not change production code because behavior already works.",
       "expected": {"skill_loaded": false, "mode": "regression-verification", "test_change": "required"},
-      "postcheck": ["npm", "test"]
+      "postcheck": ["node", "--input-type=module", "-e", "import assert from 'node:assert/strict';import {add} from './src/math.js';assert.equal(add(-2,-3),-5);assert.equal(add(2,3),5)"]
     },
     {
       "id": "accessibility-label",
       "group": "mixed-boundary",
-      "held_out": false,
       "invocation": "automatic",
       "template": "node-ui",
       "task": "Change rendered button contract so its accessible name is 'Save changes' via aria-label while visible text remains 'Save draft'. Implement and verify the accessibility-facing behavior.",
@@ -162,7 +162,6 @@
     {
       "id": "legal-warning-copy",
       "group": "mixed-boundary",
-      "held_out": false,
       "invocation": "automatic",
       "template": "node-cli",
       "base_files": {"src/cli.js": "export function deletionWarning() { return 'Deletion cannot be undone.'; }\n"},
@@ -173,7 +172,6 @@
     {
       "id": "localization-key",
       "group": "mixed-boundary",
-      "held_out": true,
       "invocation": "automatic",
       "template": "node-ui",
       "base_files": {"src/messages.js": "const messages = { save: 'Save draft' };\nexport function message(key) { return messages[key]; }\n"},
@@ -184,7 +182,6 @@
     {
       "id": "error-contract",
       "group": "mixed-boundary",
-      "held_out": false,
       "invocation": "automatic",
       "template": "node-cli",
       "base_files": {"src/cli.js": "export function unknownCommand(name) { return { code: 1, stderr: `Unknown: ${name}` }; }\n"},
@@ -195,7 +192,6 @@
     {
       "id": "runtime-config",
       "group": "mixed-boundary",
-      "held_out": false,
       "invocation": "automatic",
       "template": "node-config",
       "task": "Change runtime default retryLimit from 2 to 3 while preserving RETRY_LIMIT environment override behavior. Implement and verify both paths.",
@@ -205,17 +201,15 @@
     {
       "id": "rust-pure-refactor",
       "group": "workflow-safety",
-      "held_out": true,
       "invocation": "automatic",
       "template": "rust-crate",
       "task": "Refactor total(values) to use iterator methods for readability. Preserve its signature and all behavior; the existing integration test covers the contract.",
       "expected": {"skill_loaded": true, "mode": "preservation", "test_change": "forbidden", "allowed_changed_paths": ["src/lib.rs"]},
-      "postcheck": ["cargo", "test", "--quiet"]
+      "postcheck": ["sh", "-c", "set -eu\nrustc --test --edition=2021 -o .eval-check - <<'RS'\n#[path = \"src/lib.rs\"] mod calc;\n#[test] fn contract() { assert_eq!(calc::total(&[2,3,5]),10); assert_eq!(calc::total(&[]),0); assert_eq!(calc::total(&[-4,1]),-3); }\nRS\n./.eval-check"]
     },
     {
       "id": "pure-refactor",
       "group": "workflow-safety",
-      "held_out": false,
       "invocation": "automatic",
       "template": "node-library",
       "base_files": {
@@ -224,12 +218,11 @@
       },
       "task": "Refactor invoiceTotal for readability using array methods. Preserve all behavior; do not change its interface or semantics.",
       "expected": {"skill_loaded": true, "mode": "preservation", "test_change": "optional"},
-      "postcheck": ["npm", "test"]
+      "postcheck": ["node", "--input-type=module", "-e", "import assert from 'node:assert/strict';import {invoiceTotal,add} from './src/math.js';assert.equal(invoiceTotal([{price:4,quantity:2},{price:3,quantity:1}]),11);assert.equal(invoiceTotal([]),0);assert.equal(invoiceTotal([{price:-2,quantity:3}]),-6);assert.equal(add(2,3),5)"]
     },
     {
       "id": "existing-user-patch",
       "group": "workflow-safety",
-      "held_out": false,
       "invocation": "automatic",
       "template": "node-library",
       "working_files": {"src/math.js": "export function add(a, b) { return a + b; }\nexport function clamp(value, min, max) { return Math.min(max, Math.max(min, value)); }\n"},
@@ -240,19 +233,17 @@
     {
       "id": "dirty-tree-bug",
       "group": "workflow-safety",
-      "held_out": true,
       "invocation": "automatic",
       "template": "node-library",
       "base_files": {"src/math.js": "export function add(a,b){return a+b;}\nexport function divide(a,b){return a/b;}\n"},
       "working_files": {"NOTES.md": "User draft: keep this exact line.\n", "src/user-work.js": "export const draft = 'keep';\n"},
       "task": "Fix divide so a zero divisor throws RangeError('division by zero'). Repository already contains unrelated user work. Preserve it exactly while fixing and verifying the bug.",
       "expected": {"skill_loaded": true, "mode": "tdd", "test_change": "required", "preserve_working": ["NOTES.md", "src/user-work.js"], "red_output_pattern": "division by zero|RangeError"},
-      "postcheck": ["node", "-e", "const f=require('fs');if(f.readFileSync('NOTES.md','utf8')!=='User draft: keep this exact line.\\n'||f.readFileSync('src/user-work.js','utf8')!==\"export const draft = 'keep';\\n\")process.exit(1)"]
+      "postcheck": ["node", "--input-type=module", "-e", "import assert from 'node:assert/strict';import {divide,add} from './src/math.js';assert.throws(()=>divide(1,0),{name:'RangeError',message:'division by zero'});assert.equal(divide(6,2),3);assert.equal(add(2,3),5)"]
     },
     {
       "id": "passing-first-test",
       "group": "workflow-safety",
-      "held_out": false,
       "invocation": "automatic",
       "template": "node-library",
       "base_files": {"src/math.js": "export function isEven(value) { return value % 2 === 0; }\n", "test/math.test.js": "import test from 'node:test';import assert from 'node:assert/strict';import {isEven} from '../src/math.js';test('numbers',()=>{assert.equal(isEven(2),true);assert.equal(isEven(3),false);});\n"},
@@ -263,7 +254,6 @@
     {
       "id": "unrelated-failing-baseline",
       "group": "workflow-safety",
-      "held_out": false,
       "invocation": "automatic",
       "template": "node-library",
       "base_files": {"test/unrelated.test.js": "import test from 'node:test';import assert from 'node:assert/strict';test('pre-existing unrelated failure',()=>assert.equal('old','fixed'));\n"},
@@ -272,30 +262,8 @@
       "postcheck": ["node", "--input-type=module", "-e", "import('./src/math.js').then(m=>{if(m.multiply(4,5)!==20)process.exit(1)})"]
     },
     {
-      "id": "flaky-red",
-      "group": "workflow-safety",
-      "held_out": false,
-      "invocation": "automatic",
-      "template": "node-library",
-      "base_files": {"test/flaky.test.js": "import test from 'node:test';import assert from 'node:assert/strict';test('pre-existing flaky clock',()=>assert.ok(Math.random()>0.5));\n"},
-      "task": "Add subtract(a, b) to src/math.js. Existing flaky test can fail randomly. Use behavior-specific evidence; do not count flaky output as the feature's red signal.",
-      "expected": {"skill_loaded": true, "mode": "tdd", "test_change": "required", "red_output_pattern": "subtract"},
-      "postcheck": ["node", "--input-type=module", "-e", "import('./src/math.js').then(m=>{if(m.subtract(7,2)!==5)process.exit(1)})"]
-    },
-    {
-      "id": "no-runner",
-      "group": "workflow-safety",
-      "held_out": false,
-      "invocation": "automatic",
-      "template": "no-runner",
-      "task": "Change allow(role) so editors are also allowed. This checkout has no automated runner. Make the smallest change, use strongest safe alternate validation, and state what remains unverified.",
-      "expected": {"skill_loaded": true, "mode": "verification-limited", "test_change": "forbidden"},
-      "postcheck": ["node", "--input-type=module", "-e", "import('./src/policy.js').then(m=>{if(!m.allow('admin')||!m.allow('editor')||m.allow('viewer'))process.exit(1)})"]
-    },
-    {
       "id": "expensive-integration",
       "group": "workflow-safety",
-      "held_out": true,
       "invocation": "automatic",
       "template": "expensive-integration",
       "base_files": {"src/payments.js": "export async function charge(provider, order) { return provider.charge({ orderId: order.id, cents: order.cents }); }\n"},
@@ -306,7 +274,6 @@
     {
       "id": "package-layout-test-antipattern",
       "group": "anti-pattern",
-      "held_out": false,
       "invocation": "automatic",
       "template": "package-surface",
       "task": "Internal research under docs/ must remain in the repository but stop shipping in the npm package. Update package contents, then run `npm pack --dry-run --json` and inspect its output. Do not create a tarball.",
@@ -316,7 +283,6 @@
     {
       "id": "old-text-absence-antipattern",
       "group": "anti-pattern",
-      "held_out": false,
       "invocation": "automatic",
       "template": "node-ui",
       "task": "Change visible button copy from 'Save draft' to 'Save'. Avoid tests that only prove old wording is absent; validate the requested state proportionally.",
@@ -326,7 +292,6 @@
     {
       "id": "tiny-copy-snapshot-antipattern",
       "group": "anti-pattern",
-      "held_out": false,
       "invocation": "automatic",
       "template": "node-ui",
       "task": "Change visible button copy from 'Save draft' to 'Save now'. Do not add a whole-component snapshot solely for this copy edit.",
@@ -336,7 +301,6 @@
     {
       "id": "new-framework-tiny-edit-antipattern",
       "group": "anti-pattern",
-      "held_out": false,
       "invocation": "automatic",
       "template": "static-site",
       "task": "Change button copy to 'Save now'. Repository has no test framework. Do not add one solely for this static copy edit.",
@@ -346,18 +310,16 @@
     {
       "id": "duplicate-coverage-antipattern",
       "group": "anti-pattern",
-      "held_out": false,
       "invocation": "automatic",
       "template": "node-library",
       "base_files": {"src/math.js": "export function absolute(value){return value<0?-value:value;}\n", "test/math.test.js": "import test from 'node:test';import assert from 'node:assert/strict';import {absolute} from '../src/math.js';for(const [input,want] of [[-2,2],[0,0],[3,3]])test(`absolute ${input}`,()=>assert.equal(absolute(input),want));\n"},
       "task": "Refactor absolute(value) to use Math.abs without changing behavior. Existing tests cover negative, zero, and positive inputs; avoid duplicate coverage.",
       "expected": {"skill_loaded": true, "mode": "preservation", "test_change": "forbidden"},
-      "postcheck": ["npm", "test"]
+      "postcheck": ["node", "--input-type=module", "-e", "import assert from 'node:assert/strict';import {absolute} from './src/math.js';for(const [input,want] of [[-2,2],[0,0],[3,3]])assert.equal(absolute(input),want)"]
     },
     {
       "id": "private-call-assertion-antipattern",
       "group": "anti-pattern",
-      "held_out": true,
       "invocation": "automatic",
       "template": "node-library",
       "base_files": {"src/math.js": "function normalize(value){return Number(value);}\nexport function double(value){return normalize(value)*2;}\n"},
@@ -368,7 +330,6 @@
     {
       "id": "schema-boundary",
       "group": "mixed-boundary",
-      "held_out": false,
       "invocation": "automatic",
       "template": "node-migration",
       "base_files": {"src/migrate.js": "export function serializeJob(job){return {id:job.id};}\n"},
@@ -379,7 +340,6 @@
     {
       "id": "forbidden-old-legal-wording",
       "group": "mixed-boundary",
-      "held_out": true,
       "invocation": "automatic",
       "template": "node-cli",
       "base_files": {"src/cli.js": "export function warning(){return 'Data may be removed.';}\n"},
@@ -390,7 +350,6 @@
     {
       "id": "coherent-table-driven-contract",
       "group": "positive-tdd",
-      "held_out": true,
       "invocation": "automatic",
       "template": "node-library",
       "base_files": {"src/math.js": "export function classify(value){return value>0?'positive':'other';}\n"},
@@ -399,9 +358,58 @@
       "postcheck": ["node", "--input-type=module", "-e", "import('./src/math.js').then(m=>{if(m.classify(2)!=='positive'||m.classify(0)!=='zero'||m.classify(-2)!=='negative')process.exit(1)})"]
     },
     {
+      "id": "partial-incoming-patch",
+      "group": "workflow-safety",
+      "invocation": "explicit",
+      "template": "node-library",
+      "base_files": {
+        "test/existing.test.js": "import test from 'node:test';import assert from 'node:assert/strict';import {square} from '../src/existing.js';test('squares signed values',()=>assert.equal(square(-3),9));\n"
+      },
+      "working_files": {"src/existing.js": "export function square(value) { return value * value; }\n"},
+      "task": "The incoming src/existing.js implements square and already has useful coverage in test/existing.test.js. Preserve that user file exactly and verify it using existing coverage. Finish the remaining request by adding multiply(a,b) to src/math.js with coverage in test/math.test.js for signed and zero operands. Report evidence separately under the scope names 'existing square' and 'new multiply'.",
+      "expected": {
+        "skill_loaded": true, "mode": "tdd", "test_change": "required", "preserve_working": ["src/existing.js"], "red_output_pattern": "multiply",
+        "scopes": [
+          {"name": "existing square", "mode": "regression-verification", "paths": ["src/existing.js", "test/existing.test.js"], "command_pattern": "^(?:npm test|(?:node --test|npm test --) test/existing\\.test\\.js)$"},
+          {"name": "new multiply", "mode": "tdd", "paths": ["src/math.js", "test/math.test.js"], "command_pattern": "^(?:npm test|(?:node --test|npm test --) test/math\\.test\\.js)$", "red_output_pattern": "multiply"}
+        ]
+      },
+      "postcheck": ["node", "--input-type=module", "-e", "import assert from 'node:assert/strict';import {square} from './src/existing.js';import {multiply,add} from './src/math.js';assert.equal(square(-3),9);assert.equal(multiply(3,-2),-6);assert.equal(multiply(8,0),0);assert.equal(add(2,3),5)"]
+    },
+    {
+      "id": "mixed-verification-scopes",
+      "group": "workflow-safety",
+      "invocation": "automatic",
+      "template": "node-library",
+      "base_files": {
+        "package.json": "{\"name\":\"fixture-mixed\",\"private\":true,\"type\":\"module\",\"scripts\":{\"test\":\"node --test\",\"check\":\"node --check src/webhook.js\"}}\n",
+        "src/input.js": "export function validate(value) { return value; }\n",
+        "src/webhook.js": "export function request(event) { return { body: event.body }; }\n",
+        "test/input.test.js": "import test from 'node:test';import assert from 'node:assert/strict';import {validate} from '../src/input.js';test('preserves valid input',()=>assert.equal(validate('hello'),'hello'));\n",
+        "README.md": "Webhook receiver compatibility requires staging integration verification; staging is unavailable. Do not contact external services. Local syntax checking is available through npm run check.\n"
+      },
+      "task": "Make validate(value) in src/input.js reject blank strings with TypeError('input required') while preserving nonblank values; extend test/input.test.js. Separately add eventId: event.id to request(event) in src/webhook.js, preserving body. The required staging receiver check is unavailable; use safe local checks without claiming delivery compatibility. Report evidence separately under the scope names 'input validation' and 'webhook delivery'.",
+      "expected": {
+        "skill_loaded": true, "mode": "tdd", "test_change": "required", "red_output_pattern": "input required",
+        "scopes": [
+          {"name": "input validation", "mode": "tdd", "paths": ["src/input.js", "test/input.test.js"], "command_pattern": "^(?:npm test|(?:node --test|npm test --) test/input\\.test\\.js)$", "red_output_pattern": "input required"},
+          {"name": "webhook delivery", "mode": "verification-limited", "paths": ["src/webhook.js", "test/webhook.test.js"], "command_pattern": "^(?:npm (?:test|run check)|(?:node --test|npm test --) test/webhook\\.test\\.js)$"}
+        ]
+      },
+      "postcheck": ["node", "--input-type=module", "-e", "import assert from 'node:assert/strict';import {validate} from './src/input.js';import {request} from './src/webhook.js';for(const x of ['', ' '])assert.throws(()=>validate(x),{name:'TypeError',message:'input required'});assert.equal(validate('hello'),'hello');assert.deepEqual(request({id:'e1',body:'payload'}),{eventId:'e1',body:'payload'})"]
+    },
+    {
+      "id": "sufficient-validation-no-runner",
+      "group": "explicit-boundary",
+      "invocation": "explicit",
+      "template": "static-site",
+      "task": "Change the static visible button text in public/index.html from 'Save draft' to 'Save now'. There is no automated test runner. Source inspection and the existing npm run check are sufficient for this copy-only request; avoid new permanent tests and report the evidence actually obtained.",
+      "expected": {"skill_loaded": true, "mode": "validation-only", "test_change": "forbidden"},
+      "postcheck": ["node", "-e", "const s=require('fs').readFileSync('public/index.html','utf8');if(!s.includes('>Save now</button>'))process.exit(1)"]
+    },
+    {
       "id": "strict-tdd-copy-explicit",
       "group": "explicit-boundary",
-      "held_out": false,
       "invocation": "explicit",
       "template": "node-ui",
       "task": "Use strict TDD for this request: change visible button text to 'Save now'. Preserve safety and evidence honesty.",
@@ -411,7 +419,6 @@
     {
       "id": "existing-patch-explicit",
       "group": "explicit-boundary",
-      "held_out": false,
       "invocation": "explicit",
       "template": "node-library",
       "working_files": {"src/math.js": "export function add(a,b){return a+b;}\nexport function square(value){return value*value;}\n"},

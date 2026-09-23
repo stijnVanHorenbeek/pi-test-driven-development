@@ -56,4 +56,14 @@ Update role/name behavior test first, observe valid red, then copy.
 Label: tdd-attested.
 ```
 
+## Mixed verification
+
+```text
+Input validation: observed behavior-specific red, then focused and relevant checks green.
+Separately changed webhook delivery: local checks pass, required receiver integration unavailable.
+Report commands and the integration gap, then:
+Evidence: tdd-attested — input validation
+Evidence: verification-limited — webhook delivery
+```
+
 Use repository-native syntax and conventions. These examples do not authorize installing a runner.

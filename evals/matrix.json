@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "models": [
+    {
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "thinking": "low"
+    },
+    {
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "thinking": "medium"
+    },
+    {
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "thinking": "high"
+    },
+    {
+      "provider": "openai-codex",
+      "model": "gpt-6-sol",
+      "thinking": "medium"
+    }
+  ],
+  "repetitions": 3,
+  "retry_limit": 1,
+  "timeout_seconds": 300,
+  "inter_call_delay_ms": 1000,
+  "system_prompt": "You are a coding assistant. Follow loaded skills and use available repository tools. Complete the user's task, verify proportionally, preserve pre-existing work, and report only evidence you observed.",
+  "isolation": {
+    "settings": "in-memory",
+    "sessions": "in-memory",
+    "resources": "package-only",
+    "context_files": false,
+    "prompt_templates": false,
+    "themes": false,
+    "project_trust": false,
+    "startup_network": false,
+    "fixture_git_repository": true
+  },
+  "acceptance": {
+    "automatic_positive_load_minimum_per_three": 2,
+    "automatic_negative_load_maximum_per_three": 0,
+    "explicit_load_minimum_per_three": 3,
+    "workflow_outcome_minimum_per_three": 2,
+    "user_work_preservation_required": true,
+    "unsupported_or_missing_cells_block_complete_claim": true
+  }
+}

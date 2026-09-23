@@ -51,6 +51,19 @@ test("stores authoritative final text but never hidden thinking content", () => 
   assert.doesNotMatch(JSON.stringify(summary), /secret chain of thought/);
 });
 
+test("usage sums every assistant message, including work before the final response", () => {
+  const events = new EventEvidence(skillPath);
+  for (const usage of [
+    { input: 100, output: 50, totalTokens: 150, cost: { total: 0.02 } },
+    { input: 10, output: 5, totalTokens: 15, cost: { total: 0.01 } },
+  ]) events.consume({ type: "message_end", message: { role: "assistant", content: [], usage } });
+  const usage = events.summary().usage as any;
+  assert.equal(usage.input, 110);
+  assert.equal(usage.output, 55);
+  assert.equal(usage.totalTokens, 165);
+  assert.equal(usage.costUsd, 0.03);
+});
+
 test("retains provider stop errors without treating them as final text", () => {
   const events = new EventEvidence(skillPath);
   events.consume({

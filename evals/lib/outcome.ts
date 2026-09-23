@@ -14,6 +14,7 @@ interface OutcomeInput {
   preservedWorking: Record<string, boolean>;
   observedMode: ExpectedMode | null;
   observedLabel?: "tdd-attested" | "regression-verified" | "preservation-verified" | "validation-only" | "verification-limited" | null;
+  scopes?: Array<{ name: string; observedMode: ExpectedMode | null; observedLabel: OutcomeInput["observedLabel"] }>;
 }
 
 export function isTestPath(path: string) {
@@ -42,7 +43,7 @@ export function scoreOutcome(input: OutcomeInput) {
   const allowedChangedPathsPassed = unexpectedChangedPaths.length === 0;
   const artifactPassed = input.postcheck.exitCode === 0;
   const userWorkPassed = Object.values(input.preservedWorking).every(Boolean);
-  const modePassed = input.expected.skill_loaded
+  let modePassed = input.expected.skill_loaded
     ? input.observedMode === null ? null : input.observedMode === input.expected.mode
     : null;
   const expectedLabel = {
@@ -52,9 +53,18 @@ export function scoreOutcome(input: OutcomeInput) {
     "validation-only": "validation-only",
     "verification-limited": "verification-limited",
   }[input.expected.mode];
-  const labelPassed = input.expected.skill_loaded
+  let labelPassed = input.expected.skill_loaded
     ? input.observedLabel == null ? null : input.observedLabel === expectedLabel
     : null;
+  if (input.expected.skill_loaded && input.expected.scopes?.length) {
+    const scopes = input.expected.scopes.map((expected) => {
+      const matches = input.scopes?.filter((scope) => scope.name === expected.name) ?? [];
+      const actual = matches.length === 1 ? matches[0] : undefined;
+      return actual?.observedLabel && actual.observedMode ? actual.observedMode === expected.mode : null;
+    });
+    modePassed = scopes.some((passed) => passed === null) ? null : scopes.every(Boolean);
+    labelPassed = modePassed;
+  }
   const supported = !input.expected.skill_loaded || (modePassed !== null && labelPassed !== null);
   return {
     passed: artifactPassed && testChangePassed && forbiddenPatternsPassed && allowedChangedPathsPassed && userWorkPassed && modePassed !== false && labelPassed !== false,

@@ -6,3 +6,6 @@ dist/
 evals/results/
 .pi-subagents/
 .DS_Store
+.env
+.env.*
+!.env.example

@@ -6,8 +6,6 @@ This skill-only package defines a risk-based testing policy for [Pi](https://pi.
 
 The package registers no custom tools or extension hooks. The agent uses Pi's built-in repository tools directly.
 
-Full V1 matrix qualification remains incomplete; see Evidence status below.
-
 ## Policy
 
 Tests target observable contracts and plausible regression risks, not changed lines, file types, function counts, or coverage quotas.
@@ -23,10 +21,14 @@ Before adding a permanent test:
 | Situation | Mode | Evidence label |
 |---|---|---|
 | New/changed observable behavior or reproducible bug | TDD | `tdd-attested` |
-| Code or incoming patch existed before the run | Regression verification | `regression-verified` |
+| Requested behavior already implemented before the run | Regression verification | `regression-verified` |
 | Pure internal refactor | Preservation | `preservation-verified` |
-| No worthwhile permanent test | Validation-only | `validation-only` |
-| Safe/reliable automation unavailable | Verification-limited | `verification-limited` |
+| No worthwhile new permanent test; proportionate checks complete | Validation-only | `validation-only` |
+| Material verification gap remains after safe attempts | Verification-limited | `verification-limited` |
+
+Route each requested contract, not each file: a bug fix in existing code can still use TDD. Completed
+manual, rendered, static, or existing automated checks can justify validation-only; a missing runner
+alone does not make verification limited.
 
 Never revert, delete, overwrite, hide, or set aside pre-existing/user work solely to recreate red-first history. Never claim unobserved evidence.
 
@@ -35,7 +37,7 @@ Never revert, delete, overwrite, hide, or set aside pre-existing/user work solel
 - One progressively loaded `test-driven-development` skill.
 - References for workflows, runners, failures, test design, and UI/content.
 - TypeScript tests for package and evaluation code.
-- An author-attested, preregistered Pi SDK routing and workflow matrix.
+- A Pi SDK routing and workflow evaluation matrix with content-addressed results.
 
 The package provides no extension, custom tool, prompt template, theme, global instruction, blocking hook, auto-revert behavior, or coverage quota.
 
@@ -47,7 +49,10 @@ The skill guides the agent to use Pi's existing tools:
 - `bash` runs exact focused, baseline, regression, build, lint, typecheck, and broader commands.
 - `edit` and `write` make visible source changes while preserving unrelated dirty paths.
 
-The agent evaluates failures directly and reports observed commands, results, residual risk, and a final `Evidence: <label>`. The package adds no model-facing schemas or bookkeeping calls.
+The agent evaluates failures directly and reports observed commands, results, residual risk, and a
+final `Evidence: <label>`. Mixed work uses `Evidence: <label> — <scope>` per independent contract,
+with `verification-limited` for materially unverified scopes. One scope's success cannot cover
+another's gap. The package adds no model-facing schemas or bookkeeping calls.
 
 ## Use
 
@@ -161,45 +166,22 @@ npm pack --dry-run --json
 
 ## Evaluations
 
-The author attests that evaluation inputs were written before the initial skill implementation. The repository had no commits, so the original chronology is not independently verifiable. Matrix amendments 4–15 record the migration to a skill-only runtime, hardened built-in tool evidence, transparent Codex thinking-level tuning, and independent-review fixes. The harness hashes current inputs and code for every run. Future preregistration should use immutable commit history.
-
-- `evals/v1-matrix.json`
-- `evals/cases.json`
-- `evals/fixtures/templates.json`
-
-The matrix includes two model configurations, three repetitions, 39 natural fixture-repository tasks, automatic positive and negative routing, explicit invocation, workflow safety, anti-patterns, and held-out cases.
-
-Report preregistration and current results without model calls:
+The [evaluation guide](evals/README.md) explains how to run the matrix and read its reports. Diagnostic subsets and deterministic checks do not establish reliability; trace-informed grader changes and the lack of an independent holdout leave overfitting risk.
 
 ```bash
-npm run eval:report
+npm run check
+npm run eval -- --case reproducible-bug --repetitions 1
+npm run eval --
 ```
 
-Review provider cost before running the matrix:
-
-```bash
-npm run eval -- --track tuning
-npm run eval -- --track held-out
-```
-
-The evaluation harness uses Pi SDK sessions, in-memory settings and sessions, package-only skill resources, isolated auth and model paths, event-derived exact skill reads, and built-in tool chronology. Separate CLI/RPC smoke tests check real package discovery and command provenance.
-
-### Evidence status
-
-No full V1 matrix result is committed, so the package makes no release-quality claim about routing or workflow reliability. Development smoke subsets are diagnostic only.
-
-Static and package tests must be reported separately from live matrix results. Structural tests cannot prove probabilistic skill routing. A full claim requires all preregistered cells. Failed, timed-out, stale, missing, or unsupported cells remain visible.
-
-Held-out cases are preregistered but not secret. They test resistance to iterative prompt fitting but do not establish population generalization.
-
-Built-in tool events cannot reconstruct every shell mutation. The evaluation marks ordering as unsupported instead of inferring it. Model evidence labels do not prove semantic correctness for arbitrary repositories.
+Scoring is deterministic by default. Add `--judge jev` for TypeSafe classification of recorded traces; chronology, artifacts, and safety remain code-owned.
 
 ## Package layout
 
 ```text
 skills/test-driven-development/SKILL.md    Lean Pi router
 skills/test-driven-development/references/ Progressive workflow guidance
-evals/                                     Preregistered TypeScript SDK evaluation
+evals/                                     TypeScript SDK evaluation and fixtures
 tests/                                     Deterministic TypeScript tests
 ```
 

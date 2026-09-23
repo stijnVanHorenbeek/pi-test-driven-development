@@ -68,6 +68,25 @@ test("artificial test, forbidden pattern, failed postcheck, or changed user work
   assert.equal(result.passed, false);
 });
 
+test("mixed outcomes require matching evidence for every declared scope", () => {
+  const input = {
+    expected: { skill_loaded: true, mode: "tdd" as const, test_change: "required" as const, scopes: [
+      { name: "input validation", mode: "tdd" as const, paths: ["src/input.js"], command_pattern: "test", red_output_pattern: "input required" },
+      { name: "webhook delivery", mode: "verification-limited" as const, paths: ["src/webhook.js"], command_pattern: "check" },
+    ] },
+    changedPaths: ["src/input.js", "test/input.test.js", "src/webhook.js"], diff: "",
+    postcheck: { exitCode: 0, stdout: "", stderr: "" }, preservedWorking: {}, observedMode: null,
+    scopes: [
+      { name: "input validation", observedMode: "tdd" as const, observedLabel: "tdd-attested" as const },
+      { name: "webhook delivery", observedMode: "verification-limited" as const, observedLabel: "verification-limited" as const },
+    ],
+  };
+  assert.equal(scoreOutcome(input).supported, true);
+  assert.equal(scoreOutcome(input).passed, true);
+  assert.equal(scoreOutcome({ ...input, scopes: input.scopes.slice(0, 1) }).supported, false);
+  assert.equal(scoreOutcome({ ...input, scopes: [input.scopes[0]!, { name: "webhook delivery", observedMode: "tdd", observedLabel: "tdd-attested" }] }).passed, false);
+});
+
 test("mode evidence is required only when observable and expected skill loaded", () => {
   const positive = scoreOutcome({
     expected: { skill_loaded: true, mode: "tdd", test_change: "required" },

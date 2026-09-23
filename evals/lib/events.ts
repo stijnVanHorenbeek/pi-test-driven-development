@@ -37,7 +37,7 @@ export class EventEvidence {
   #finalText = "";
   #provider?: string;
   #model?: string;
-  #usage?: unknown;
+  #usage = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, totalTokens: 0, costUsd: 0 };
   #stopReason?: string;
   #errorMessage?: string;
 
@@ -84,7 +84,11 @@ export class EventEvidence {
         .join("");
       this.#provider = event.message.provider;
       this.#model = event.message.model;
-      this.#usage = event.message.usage ? structuredClone(event.message.usage) : undefined;
+      const usage = event.message.usage;
+      for (const key of ["input", "output", "cacheRead", "cacheWrite", "totalTokens"] as const) {
+        if (typeof usage?.[key] === "number") this.#usage[key] += usage[key];
+      }
+      if (typeof usage?.cost?.total === "number") this.#usage.costUsd += usage.cost.total;
       this.#stopReason = event.message.stopReason;
       this.#errorMessage = event.message.errorMessage;
     }
@@ -99,7 +103,7 @@ export class EventEvidence {
       finalText: this.#finalText,
       provider: this.#provider,
       model: this.#model,
-      usage: this.#usage,
+      usage: { ...this.#usage },
       stopReason: this.#stopReason,
       errorMessage: this.#errorMessage,
       timeline: structuredClone(this.#timeline),

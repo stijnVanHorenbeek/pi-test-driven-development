@@ -1,5 +1,4 @@
 {
-  "schema_version": 1,
   "templates": {
     "node-library": {
       "production_globs": ["src/**"],
@@ -118,12 +117,15 @@
         "skills/example/SKILL.md": "---\nname: example\ndescription: Fixture skill.\n---\n\n# Example\n"
       }
     },
-    "no-runner": {
+    "dotnet-library": {
       "production_globs": ["src/**"],
-      "test_globs": ["test/**", "tests/**", "**/*.test.*"],
+      "test_globs": ["tests/**"],
       "base_files": {
-        "src/policy.js": "export function allow(role) {\n  return role === 'admin';\n}\n",
-        "README.md": "# Legacy fixture\n\nNo automated test runner is available in this checkout.\n"
+        ".gitignore": "**/bin/\n**/obj/\n",
+        "src/Calculator.csproj": "<Project Sdk=\"Microsoft.NET.Sdk\"><PropertyGroup><TargetFramework>net10.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings></PropertyGroup></Project>\n",
+        "src/Calculator.cs": "namespace Fixture;\npublic static class Calculator { public static int Clamp(int value, int min, int max) => value; }\n",
+        "tests/Calculator.Tests.csproj": "<Project Sdk=\"Microsoft.NET.Sdk\"><PropertyGroup><TargetFramework>net10.0</TargetFramework><IsTestProject>true</IsTestProject></PropertyGroup><ItemGroup><PackageReference Include=\"Microsoft.NET.Test.Sdk\" Version=\"18.10.1\" /><PackageReference Include=\"xunit\" Version=\"2.9.3\" /><PackageReference Include=\"xunit.runner.visualstudio\" Version=\"3.1.5\" /><ProjectReference Include=\"../src/Calculator.csproj\" /></ItemGroup></Project>\n",
+        "tests/CalculatorTests.cs": "using Fixture;\nusing Xunit;\npublic class CalculatorTests { [Fact] public void KeepsInRange() => Assert.Equal(2, Calculator.Clamp(2, 0, 5)); }\n"
       }
     },
     "expensive-integration": {
